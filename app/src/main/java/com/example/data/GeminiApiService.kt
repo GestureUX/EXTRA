@@ -27,12 +27,11 @@ class GeminiApiService(
 ) {
     /**
      * Connects to Google Generative Language API using supported endpoints.
-     * Default model is gemini-pro (with automatic fallback to gemini-2.5-flash / gemini-2.0-flash).
-     * Handles system instructions safely across all model versions.
-     * Sanitizes multi-turn alternating user/model conversation history.
+     * Default model is gemini-3.8-flash (with automatic fallback to gemini-2.5-flash / gemini-3.5-flash-lite).
+     * Handles system instructions safely and sanitizes multi-turn alternating user/model conversation history.
      */
     fun generateContentStream(
-        modelName: String = "gemini-pro",
+        modelName: String = "gemini-3.8-flash",
         systemInstruction: String,
         historyMessages: List<ChatMessage>,
         newPrompt: String
@@ -48,16 +47,16 @@ class GeminiApiService(
                 "⚠️ **Google AI Studio API Key Not Configured**\n\n" +
                 "To connect live to the Gemini API (`$modelName`):\n\n" +
                 "1. Open the **Secrets panel** in the AI Studio sidebar.\n" +
-                "2. Add your free key as **`GEMINI_API_KEY`** (get one free at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)).\n" +
+                "2. The `GEMINI_API_KEY` secret is injected at runtime.\n" +
                 "3. Re-send your message to generate real-time answers!"
             )
             return@flow
         }
 
-        // Candidate fallback endpoints: (apiVersion, modelId)
+        // Map any legacy or retired names to currently active, non-deprecated models
         val normalizedModel = when (modelName.lowercase()) {
-            "gemini-1.5-flash", "gemini-1.5-flash-latest" -> "gemini-pro"
-            "gemini-1.5-pro", "gemini-1.5-pro-latest" -> "gemini-pro"
+            "gemini-2.0-flash", "gemini-2.0-flash-exp", "gemini-2.0-flash-latest" -> "gemini-3.8-flash"
+            "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro" -> "gemini-3.8-flash"
             else -> modelName
         }
 
@@ -108,14 +107,10 @@ class GeminiApiService(
                     }
                     lastErrorMsg = extractedError
 
-                    // If error is 404 (model not found), continue loop to next candidate
-                    if (response.code == 404) {
-                        continue
-                    } else if (response.code == 400 && extractedError.contains("system_instruction", ignoreCase = true)) {
-                        // Older models rejecting system_instruction: retry with prepended context
+                    // If error is 404 (model not found) or contains deprecation notice, continue to next candidate
+                    if (response.code == 404 || extractedError.contains("no longer available", ignoreCase = true) || extractedError.contains("deprecated", ignoreCase = true)) {
                         continue
                     } else if (response.code == 403 || response.code == 401) {
-                        // Auth/Key error: No need to retry different models with invalid credentials
                         emit("⚠️ **Gemini API Key Error (${response.code})**: $extractedError\n\nPlease verify that your `GEMINI_API_KEY` in the AI Studio Secrets panel is valid and has Generative Language API enabled.")
                         return@flow
                     }
@@ -127,7 +122,7 @@ class GeminiApiService(
         }
 
         if (!responseSuccess) {
-            emit("⚠️ **Gemini API Error**: $lastErrorMsg\n\nEnsure a valid model like `gemini-pro` is available for your API key.")
+            emit("⚠️ **Gemini API Error**: $lastErrorMsg\n\nPlease verify network connection or model availability.")
             return@flow
         }
 
@@ -156,18 +151,17 @@ class GeminiApiService(
         list.add(ApiCandidate("v1beta", primaryModel))
         list.add(ApiCandidate("v1", primaryModel))
 
-        // 2. High-reliability fallback: gemini-pro (standard Google AI Studio model)
-        if (primaryModel != "gemini-pro") {
-            list.add(ApiCandidate("v1beta", "gemini-pro"))
-            list.add(ApiCandidate("v1", "gemini-pro"))
+        // 2. Active, non-deprecated fallbacks only: gemini-3.8-flash, gemini-2.5-flash, gemini-3.5-flash-lite
+        if (primaryModel != "gemini-3.8-flash") {
+            list.add(ApiCandidate("v1beta", "gemini-3.8-flash"))
+            list.add(ApiCandidate("v1", "gemini-3.8-flash"))
         }
-
-        // 3. Newer generation models
         if (primaryModel != "gemini-2.5-flash") {
             list.add(ApiCandidate("v1beta", "gemini-2.5-flash"))
+            list.add(ApiCandidate("v1", "gemini-2.5-flash"))
         }
-        if (primaryModel != "gemini-2.0-flash") {
-            list.add(ApiCandidate("v1beta", "gemini-2.0-flash"))
+        if (primaryModel != "gemini-3.5-flash-lite") {
+            list.add(ApiCandidate("v1beta", "gemini-3.5-flash-lite"))
         }
 
         return list.distinct()
@@ -180,11 +174,9 @@ class GeminiApiService(
         newPrompt: String
     ): String {
         val requestJson = JSONObject()
-        val isGemini10Pro = modelId.equals("gemini-pro", ignoreCase = true)
 
-        // Native system_instruction is supported on Gemini 1.5+ and 2.0+ models
-        // For gemini-pro (1.0), developer instruction is prepended to the prompt to prevent 400 errors
-        if (!isGemini10Pro && systemInstruction.isNotBlank()) {
+        // Native system_instruction for Gemini models
+        if (systemInstruction.isNotBlank()) {
             val sysInstructionObj = JSONObject()
             val sysParts = JSONArray().apply {
                 put(JSONObject().put("text", systemInstruction))
@@ -222,17 +214,11 @@ class GeminiApiService(
         }
 
         // Append active user message
-        val finalUserPrompt = if (isGemini10Pro && systemInstruction.isNotBlank() && turns.isEmpty()) {
-            "System Instructions: $systemInstruction\n\n$newPrompt"
-        } else {
-            newPrompt
-        }
-
         if (turns.isNotEmpty() && turns.last().first == "user") {
             val prev = turns.removeAt(turns.lastIndex)
-            turns.add(Pair("user", "${prev.second}\n\n$finalUserPrompt"))
+            turns.add(Pair("user", "${prev.second}\n\n$newPrompt"))
         } else {
-            turns.add(Pair("user", finalUserPrompt))
+            turns.add(Pair("user", newPrompt))
         }
 
         for (turn in turns) {

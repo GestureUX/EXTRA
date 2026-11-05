@@ -92,7 +92,7 @@ object CubeWebSourceRepository {
           <div class="w-7 h-7 rounded-full bg-[#CC785C] text-white flex items-center justify-center font-bold">C</div>
           <div>
             <div class="font-medium">User Workspace</div>
-            <div class="text-[#CC785C]">gemini-pro</div>
+            <div class="text-[#CC785C]">gemini-3.8-flash</div>
           </div>
         </div>
       </div>
@@ -104,7 +104,7 @@ object CubeWebSourceRepository {
       <header class="h-14 border-b border-[#E8E2D8] dark:border-[#333338] px-6 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="text-sm font-medium bg-stone-200/70 dark:bg-stone-800 px-3 py-1 rounded-lg">
-            Cube Pro (gemini-pro)
+            Cube 3.8 Flash (gemini-3.8-flash)
           </span>
         </div>
         <button id="clearChatBtn" class="text-xs text-stone-500 hover:text-stone-800 dark:hover:text-stone-200">
@@ -121,7 +121,7 @@ object CubeWebSourceRepository {
           </svg>
           <h1 class="serif-title text-3xl md:text-4xl font-normal mb-3">How can Cube help you today?</h1>
           <p class="text-sm text-stone-500 dark:text-stone-400 max-w-md mb-8">
-            Connected to Google AI Studio's Gemini API (gemini-pro) with multi-turn conversation memory.
+            Connected to Google AI Studio's Gemini API (gemini-3.8-flash) with multi-turn conversation memory.
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-xl text-left text-sm">
@@ -195,7 +195,7 @@ object CubeWebSourceRepository {
       botMessage.innerHTML = `
         <div class="w-7 h-7 rounded-full bg-[#CC785C]/15 text-[#CC785C] flex items-center justify-center font-bold text-xs shrink-0 mt-1">✦</div>
         <div class="flex flex-col gap-2 flex-1">
-          <div class="text-xs text-stone-400">Cube • gemini-pro</div>
+          <div class="text-xs text-stone-400">Cube • gemini-3.8-flash</div>
           <div class="p-4 rounded-2xl border border-[#E8E2D8] dark:border-[#333338] bg-white dark:bg-[#202024] text-sm leading-relaxed text-stone-800 dark:text-stone-100 stream-target">
             Thinking…
           </div>
@@ -207,7 +207,7 @@ object CubeWebSourceRepository {
       // Simulate streaming response
       setTimeout(() => {
         const target = botMessage.querySelector('.stream-target');
-        const reply = "Cube is now refactored with Claude's warm minimalist design principles: paper-like cream backgrounds, editorial serif typography (Lora), and grounded terracotta accents. The chat engine connects to Google AI Studio's Gemini API (gemini-pro).";
+        const reply = "Cube is now refactored with Claude's warm minimalist design principles: paper-like cream backgrounds, editorial serif typography (Lora), and grounded terracotta accents. The chat engine connects to Google AI Studio's Gemini API (gemini-3.8-flash).";
         let index = 0;
         target.textContent = "";
         const interval = setInterval(() => {

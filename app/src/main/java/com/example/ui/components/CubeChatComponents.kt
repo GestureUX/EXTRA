@@ -105,7 +105,7 @@ fun CubeWelcomeEmptyState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Powered by Google AI Studio's Gemini API (gemini-pro) with full multi-turn conversation memory.",
+            text = "Powered by Google AI Studio's Gemini API (gemini-3.8-flash) with full multi-turn conversation memory.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
