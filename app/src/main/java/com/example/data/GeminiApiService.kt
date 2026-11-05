@@ -26,12 +26,13 @@ class GeminiApiService(
         .build()
 ) {
     /**
-     * Connects to Google AI Studio's free Gemini API using gemini-1.5-flash.
-     * Reads API key safely from BuildConfig.GEMINI_API_KEY (.env).
-     * Maintains multi-turn conversation history and system instructions.
+     * Connects to Google Generative Language API using supported endpoints.
+     * Default model is gemini-pro (with automatic fallback to gemini-2.5-flash / gemini-2.0-flash).
+     * Handles system instructions safely across all model versions.
+     * Sanitizes multi-turn alternating user/model conversation history.
      */
     fun generateContentStream(
-        modelName: String = "gemini-1.5-flash",
+        modelName: String = "gemini-pro",
         systemInstruction: String,
         historyMessages: List<ChatMessage>,
         newPrompt: String
@@ -45,7 +46,7 @@ class GeminiApiService(
         if (apiKey.isEmpty() || apiKey == "YOUR_GEMINI_API_KEY" || apiKey == "MY_GEMINI_API_KEY") {
             emit(
                 "⚠️ **Google AI Studio API Key Not Configured**\n\n" +
-                "To connect live to Google AI Studio's free Gemini API (`$modelName`):\n\n" +
+                "To connect live to the Gemini API (`$modelName`):\n\n" +
                 "1. Open the **Secrets panel** in the AI Studio sidebar.\n" +
                 "2. Add your free key as **`GEMINI_API_KEY`** (get one free at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)).\n" +
                 "3. Re-send your message to generate real-time answers!"
@@ -53,91 +54,80 @@ class GeminiApiService(
             return@flow
         }
 
-        val requestJson = JSONObject()
-
-        // 1. System Instruction (Claude/Assistant role definition)
-        if (systemInstruction.isNotBlank()) {
-            val sysInstructionObj = JSONObject()
-            val sysParts = JSONArray().apply {
-                put(JSONObject().put("text", systemInstruction))
-            }
-            sysInstructionObj.put("parts", sysParts)
-            requestJson.put("system_instruction", sysInstructionObj)
+        // Candidate fallback endpoints: (apiVersion, modelId)
+        val normalizedModel = when (modelName.lowercase()) {
+            "gemini-1.5-flash", "gemini-1.5-flash-latest" -> "gemini-pro"
+            "gemini-1.5-pro", "gemini-1.5-pro-latest" -> "gemini-pro"
+            else -> modelName
         }
 
-        // 2. Multi-turn conversation contents
-        val contentsArray = JSONArray()
+        val candidates = buildCandidateList(normalizedModel)
 
-        historyMessages.forEach { msg ->
-            if (msg.text.isNotBlank() && !msg.isStreaming && !msg.isError) {
-                val turnRole = if (msg.isUser) "user" else "model"
-                val turnObj = JSONObject()
-                turnObj.put("role", turnRole)
-                val parts = JSONArray().apply {
-                    put(JSONObject().put("text", msg.text))
+        var lastErrorMsg = "Unknown error"
+        var responseSuccess = false
+        var fullText = ""
+
+        for (candidate in candidates) {
+            try {
+                Log.d(TAG, "Attempting generation with apiVersion=${candidate.apiVersion}, model=${candidate.modelId}")
+                val requestBodyString = buildRequestBody(
+                    modelId = candidate.modelId,
+                    systemInstruction = systemInstruction,
+                    historyMessages = historyMessages,
+                    newPrompt = newPrompt
+                )
+
+                val mediaType = "application/json; charset=utf-8".toMediaType()
+                val requestBody = requestBodyString.toRequestBody(mediaType)
+                val url = "https://generativelanguage.googleapis.com/${candidate.apiVersion}/models/${candidate.modelId}:generateContent?key=$apiKey"
+
+                val request = Request.Builder()
+                    .url(url)
+                    .post(requestBody)
+                    .addHeader("Content-Type", "application/json")
+                    .build()
+
+                val response = client.newCall(request).execute()
+                val responseBody = response.body?.string().orEmpty()
+
+                if (response.isSuccessful) {
+                    val parsed = parseResponseText(responseBody)
+                    if (parsed.isNotBlank()) {
+                        fullText = parsed
+                        responseSuccess = true
+                        Log.i(TAG, "Successfully generated response via ${candidate.modelId} (${candidate.apiVersion})")
+                        break
+                    }
+                } else {
+                    Log.w(TAG, "Candidate ${candidate.modelId} HTTP ${response.code}: $responseBody")
+                    val extractedError = try {
+                        val json = JSONObject(responseBody)
+                        json.optJSONObject("error")?.optString("message") ?: "HTTP ${response.code}"
+                    } catch (_: Exception) {
+                        "HTTP ${response.code}"
+                    }
+                    lastErrorMsg = extractedError
+
+                    // If error is 404 (model not found), continue loop to next candidate
+                    if (response.code == 404) {
+                        continue
+                    } else if (response.code == 400 && extractedError.contains("system_instruction", ignoreCase = true)) {
+                        // Older models rejecting system_instruction: retry with prepended context
+                        continue
+                    } else if (response.code == 403 || response.code == 401) {
+                        // Auth/Key error: No need to retry different models with invalid credentials
+                        emit("⚠️ **Gemini API Key Error (${response.code})**: $extractedError\n\nPlease verify that your `GEMINI_API_KEY` in the AI Studio Secrets panel is valid and has Generative Language API enabled.")
+                        return@flow
+                    }
                 }
-                turnObj.put("parts", parts)
-                contentsArray.put(turnObj)
+            } catch (e: Exception) {
+                Log.w(TAG, "Exception contacting candidate ${candidate.modelId}: ${e.message}")
+                lastErrorMsg = e.localizedMessage ?: e.javaClass.simpleName
             }
         }
 
-        // Append active user message
-        val currentTurn = JSONObject().apply {
-            put("role", "user")
-            put("parts", JSONArray().apply {
-                put(JSONObject().put("text", newPrompt))
-            })
-        }
-        contentsArray.put(currentTurn)
-        requestJson.put("contents", contentsArray)
-
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-        val requestBody = requestJson.toString().toRequestBody(mediaType)
-
-        val url = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$apiKey"
-
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .addHeader("Content-Type", "application/json")
-            .build()
-
-        val response = client.newCall(request).execute()
-        val responseBody = response.body?.string().orEmpty()
-
-        if (!response.isSuccessful) {
-            Log.e(TAG, "Gemini API HTTP ${response.code}: $responseBody")
-            val errorMsg = try {
-                val json = JSONObject(responseBody)
-                json.optJSONObject("error")?.optString("message") ?: "HTTP ${response.code}: ${response.message}"
-            } catch (_: Exception) {
-                "HTTP ${response.code}: ${response.message}"
-            }
-            emit("⚠️ **Gemini API Error (${response.code})**: $errorMsg")
-            return@flow
-        }
-
-        val fullText = try {
-            val root = JSONObject(responseBody)
-            val candidates = root.optJSONArray("candidates")
-            val firstCandidate = candidates?.optJSONObject(0)
-            val content = firstCandidate?.optJSONObject("content")
-            val parts = content?.optJSONArray("parts")
-            val sb = StringBuilder()
-            if (parts != null) {
-                for (idx in 0 until parts.length()) {
-                    val p = parts.optJSONObject(idx)
-                    sb.append(p?.optString("text").orEmpty())
-                }
-            }
-            sb.toString()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to parse Gemini response JSON", e)
-            throw e
-        }
-
-        if (fullText.isBlank()) {
-            emit("Model returned an empty response.")
+        if (!responseSuccess) {
+            emit("⚠️ **Gemini API Error**: $lastErrorMsg\n\nEnsure a valid model like `gemini-pro` is available for your API key.")
             return@flow
         }
 
@@ -157,4 +147,126 @@ class GeminiApiService(
         }
         emit(fullText)
     }.flowOn(Dispatchers.IO)
+
+    private data class ApiCandidate(val apiVersion: String, val modelId: String)
+
+    private fun buildCandidateList(primaryModel: String): List<ApiCandidate> {
+        val list = mutableListOf<ApiCandidate>()
+        // 1. Primary requested model on v1beta and v1
+        list.add(ApiCandidate("v1beta", primaryModel))
+        list.add(ApiCandidate("v1", primaryModel))
+
+        // 2. High-reliability fallback: gemini-pro (standard Google AI Studio model)
+        if (primaryModel != "gemini-pro") {
+            list.add(ApiCandidate("v1beta", "gemini-pro"))
+            list.add(ApiCandidate("v1", "gemini-pro"))
+        }
+
+        // 3. Newer generation models
+        if (primaryModel != "gemini-2.5-flash") {
+            list.add(ApiCandidate("v1beta", "gemini-2.5-flash"))
+        }
+        if (primaryModel != "gemini-2.0-flash") {
+            list.add(ApiCandidate("v1beta", "gemini-2.0-flash"))
+        }
+
+        return list.distinct()
+    }
+
+    private fun buildRequestBody(
+        modelId: String,
+        systemInstruction: String,
+        historyMessages: List<ChatMessage>,
+        newPrompt: String
+    ): String {
+        val requestJson = JSONObject()
+        val isGemini10Pro = modelId.equals("gemini-pro", ignoreCase = true)
+
+        // Native system_instruction is supported on Gemini 1.5+ and 2.0+ models
+        // For gemini-pro (1.0), developer instruction is prepended to the prompt to prevent 400 errors
+        if (!isGemini10Pro && systemInstruction.isNotBlank()) {
+            val sysInstructionObj = JSONObject()
+            val sysParts = JSONArray().apply {
+                put(JSONObject().put("text", systemInstruction))
+            }
+            sysInstructionObj.put("parts", sysParts)
+            requestJson.put("system_instruction", sysInstructionObj)
+        }
+
+        // Build clean alternating contents array
+        val contentsArray = JSONArray()
+
+        // Filter valid prior messages
+        val validHistory = historyMessages.filter {
+            it.text.isNotBlank() && !it.isStreaming && !it.isError
+        }
+
+        var lastRole: String? = null
+        val turns = mutableListOf<Pair<String, String>>()
+
+        for (msg in validHistory) {
+            val role = if (msg.isUser) "user" else "model"
+            if (role == lastRole && turns.isNotEmpty()) {
+                // Merge consecutive turns of the same role
+                val prev = turns.removeAt(turns.lastIndex)
+                turns.add(Pair(role, "${prev.second}\n\n${msg.text}"))
+            } else {
+                turns.add(Pair(role, msg.text))
+                lastRole = role
+            }
+        }
+
+        // Ensure history starts with "user"
+        while (turns.isNotEmpty() && turns.first().first != "user") {
+            turns.removeAt(0)
+        }
+
+        // Append active user message
+        val finalUserPrompt = if (isGemini10Pro && systemInstruction.isNotBlank() && turns.isEmpty()) {
+            "System Instructions: $systemInstruction\n\n$newPrompt"
+        } else {
+            newPrompt
+        }
+
+        if (turns.isNotEmpty() && turns.last().first == "user") {
+            val prev = turns.removeAt(turns.lastIndex)
+            turns.add(Pair("user", "${prev.second}\n\n$finalUserPrompt"))
+        } else {
+            turns.add(Pair("user", finalUserPrompt))
+        }
+
+        for (turn in turns) {
+            val turnObj = JSONObject()
+            turnObj.put("role", turn.first)
+            val parts = JSONArray().apply {
+                put(JSONObject().put("text", turn.second))
+            }
+            turnObj.put("parts", parts)
+            contentsArray.put(turnObj)
+        }
+
+        requestJson.put("contents", contentsArray)
+        return requestJson.toString()
+    }
+
+    private fun parseResponseText(responseBody: String): String {
+        return try {
+            val root = JSONObject(responseBody)
+            val candidates = root.optJSONArray("candidates")
+            val firstCandidate = candidates?.optJSONObject(0)
+            val content = firstCandidate?.optJSONObject("content")
+            val parts = content?.optJSONArray("parts")
+            val sb = StringBuilder()
+            if (parts != null) {
+                for (idx in 0 until parts.length()) {
+                    val p = parts.optJSONObject(idx)
+                    sb.append(p?.optString("text").orEmpty())
+                }
+            }
+            sb.toString().trim()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse response JSON", e)
+            ""
+        }
+    }
 }

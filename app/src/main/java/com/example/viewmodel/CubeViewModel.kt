@@ -61,24 +61,24 @@ data class CubeUiState(
     companion object {
         val defaultModels = listOf(
             CubeModelOption(
-                id = "cube-1-5-flash",
-                name = "Cube 1.5 Flash",
-                geminiModelId = "gemini-1.5-flash",
-                badge = "FAST & FREE",
+                id = "cube-pro",
+                name = "Cube Pro",
+                geminiModelId = "gemini-pro",
+                badge = "RECOMMENDED",
                 roleTitle = "Articulate Generalist",
-                description = "Google AI Studio's free Gemini 1.5 Flash API. Optimized for rapid, articulate, and thoughtful multi-turn responses.",
-                latencyLabel = "gemini-1.5-flash",
+                description = "Supported Google AI Studio model for reliable, multi-turn reasoning and conversational answers without 404 errors.",
+                latencyLabel = "gemini-pro",
                 defaultSystemInstruction = "You are Cube, an intelligent, thoughtful, articulate, and warm assistant inspired by Claude. You communicate with clarity, precision, and intellectual honesty. When asked to code or reason through problems, provide clean, idiomatic solutions formatted in readable markdown with syntax-highlighted code blocks. Maintain conversation context across all previous turns."
             ),
             CubeModelOption(
-                id = "cube-1-5-pro",
-                name = "Cube 1.5 Pro",
-                geminiModelId = "gemini-1.5-pro",
-                badge = "DEEP REASONING",
-                roleTitle = "Advanced STEM & Logic Analyst",
-                description = "Engineered for complex reasoning, mathematical proofs, nuanced code reviews, and large context comprehension.",
-                latencyLabel = "gemini-1.5-pro",
-                defaultSystemInstruction = "You are Cube 1.5 Pro, an elite reasoning assistant and senior software architect. Provide comprehensive, deeply thought-out explanations and production-grade architectures with meticulous attention to detail."
+                id = "cube-2-5-flash",
+                name = "Cube 2.5 Flash",
+                geminiModelId = "gemini-2.5-flash",
+                badge = "LATEST",
+                roleTitle = "Advanced Reasoning & Speed",
+                description = "Latest generation Gemini model engineered for complex problem solving, low latency, and comprehensive code generation.",
+                latencyLabel = "gemini-2.5-flash",
+                defaultSystemInstruction = "You are Cube 2.5 Flash, an elite reasoning assistant and senior software architect. Provide comprehensive, deeply thought-out explanations and production-grade architectures with meticulous attention to detail."
             ),
             CubeModelOption(
                 id = "cube-2-0-flash",
@@ -165,7 +165,7 @@ class CubeViewModel(
                         isUser = true,
                         text = "Why do interfaces inspired by Claude choose warm cream backgrounds (#FBF9F5) and terracotta accents over high-contrast dark neon?",
                         timestamp = "10:14 AM",
-                        modelUsed = "Cube 1.5 Flash"
+                        modelUsed = "Cube Pro"
                     ),
                     ChatMessage(
                         id = "msg-seed-2",
@@ -179,7 +179,7 @@ class CubeViewModel(
                             4. **Uncluttered White Space**: Generous padding and subtle hairline borders guide focus to the text itself rather than surrounding chrome.
                         """.trimIndent(),
                         timestamp = "10:14 AM",
-                        modelUsed = "Cube 1.5 Flash",
+                        modelUsed = "Cube Pro",
                         thinkingDurationMs = 380
                     )
                 )

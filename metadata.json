@@ -1,6 +1,6 @@
 {
   "name": "Cube",
-  "description": "A Claude-inspired minimalist AI chatbot workspace with warm editorial typography, terracotta accents, and multi-turn conversational responses powered by Google AI Studio's Gemini 1.5 Flash API.",
+  "description": "A Claude-inspired minimalist AI chatbot workspace with warm editorial typography, terracotta accents, and multi-turn conversational responses powered by Google AI Studio's Gemini API (gemini-pro).",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

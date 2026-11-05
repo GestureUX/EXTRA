@@ -358,7 +358,7 @@ fun CubeSidebar(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "Gemini 1.5 Flash Free Tier",
+                                text = "Google AI Studio • gemini-pro",
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                 color = ClaudeTerracotta
                             )
