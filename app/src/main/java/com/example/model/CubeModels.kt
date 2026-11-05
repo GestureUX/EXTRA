@@ -3,9 +3,12 @@ package com.example.model
 data class CubeModelOption(
     val id: String,
     val name: String,
+    val geminiModelId: String,
     val badge: String,
+    val roleTitle: String,
     val description: String,
-    val latencyLabel: String
+    val latencyLabel: String,
+    val defaultSystemInstruction: String
 )
 
 enum class FeedbackState {
@@ -28,10 +31,11 @@ data class ChatMessage(
     val timestamp: String,
     val modelUsed: String = "Cube 1.0 Pro",
     val isStreaming: Boolean = false,
+    val isError: Boolean = false,
     val webSearchUsed: Boolean = false,
     val attachments: List<AttachmentChip> = emptyList(),
     val feedback: FeedbackState = FeedbackState.NONE,
-    val thinkingDurationMs: Int = 640
+    val thinkingDurationMs: Int = 450
 )
 
 data class ChatSession(

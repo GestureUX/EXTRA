@@ -2,6 +2,7 @@ package com.example.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -127,10 +128,17 @@ fun RenameSessionDialog(
 fun CubeSettingsDialog(
     oledPitchMode: Boolean,
     isWebSearchEnabled: Boolean,
+    selectedModel: com.example.model.CubeModelOption,
+    availableModels: List<com.example.model.CubeModelOption>,
+    currentSystemInstruction: String,
+    onSelectModel: (com.example.model.CubeModelOption) -> Unit,
+    onUpdateSystemInstruction: (String) -> Unit,
     onToggleOledMode: () -> Unit,
     onToggleWebSearch: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    var instructionDraft by remember(currentSystemInstruction) { mutableStateOf(currentSystemInstruction) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -142,13 +150,117 @@ fun CubeSettingsDialog(
             ) {
                 CubeIsometricIcon(size = 28.dp)
                 Text(
-                    text = "Cube Workspace Settings",
+                    text = "Cube Neural Settings",
                     style = MaterialTheme.typography.titleLarge
                 )
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Section: Chatbot Engine & Specific Role
+                Text(
+                    text = "ACTIVE CHATBOT MODEL & ROLE",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                    color = CubeCyan
+                )
+
+                availableModels.forEach { modelOption ->
+                    val isSelected = modelOption.id == selectedModel.id
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (isSelected) CubeCyan.copy(alpha = 0.12f)
+                                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = if (isSelected) CubeCyan else MaterialTheme.colorScheme.outline,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable {
+                                onSelectModel(modelOption)
+                                instructionDraft = modelOption.defaultSystemInstruction
+                                onUpdateSystemInstruction(modelOption.defaultSystemInstruction)
+                            }
+                            .padding(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = modelOption.name,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                color = if (isSelected) CubeCyan else CubeTextPrimary
+                            )
+                            Text(
+                                text = modelOption.geminiModelId,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = CubeCyan
+                            )
+                        }
+                        Text(
+                            text = "Role: ${modelOption.roleTitle}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = CubeTextPrimary
+                        )
+                        Text(
+                            text = modelOption.description,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.5.sp),
+                            color = CubeTextSecondary
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Section: System Instruction (Role Prompt)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "ROLE SYSTEM INSTRUCTION",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                        color = CubeCyan
+                    )
+                    TextButton(
+                        onClick = {
+                            instructionDraft = selectedModel.defaultSystemInstruction
+                            onUpdateSystemInstruction(selectedModel.defaultSystemInstruction)
+                        }
+                    ) {
+                        Text("Reset Default", fontSize = 11.sp, color = CubeCyan)
+                    }
+                }
+
+                OutlinedTextField(
+                    value = instructionDraft,
+                    onValueChange = {
+                        instructionDraft = it
+                        onUpdateSystemInstruction(it)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 4,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = CubeCyan,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedTextColor = CubeTextPrimary,
+                        unfocusedTextColor = CubeTextPrimary
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Theme Mode Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -161,7 +273,7 @@ fun CubeSettingsDialog(
                             color = CubeTextPrimary
                         )
                         Text(
-                            text = "Switch between #0B0F17 Stealth Slate and ultra-deep OLED black.",
+                            text = "Switch between #0B0F17 Stealth and ultra-deep OLED black.",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                             color = CubeTextSecondary
                         )
@@ -169,33 +281,6 @@ fun CubeSettingsDialog(
                     Switch(
                         checked = oledPitchMode,
                         onCheckedChange = { onToggleOledMode() },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color(0xFF03171C),
-                            checkedTrackColor = CubeCyan
-                        )
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Real-Time Web Search Grounding",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = CubeTextPrimary
-                        )
-                        Text(
-                            text = "Include live citation telemetry in simulated Cube responses.",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            color = CubeTextSecondary
-                        )
-                    }
-                    Switch(
-                        checked = isWebSearchEnabled,
-                        onCheckedChange = { onToggleWebSearch() },
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color(0xFF03171C),
                             checkedTrackColor = CubeCyan

@@ -1,6 +1,6 @@
 {
   "name": "Cube",
-  "description": "A futuristic, ultra-sleek AI chatbot workspace UI inspired by Grok with live streaming simulation, code sandbox, and collapsible navigation.",
+  "description": "A futuristic, ultra-sleek AI chatbot workspace powered by multi-turn Gemini 3.8 Flash, 3.1 Flash-Lite, and 4 Argon with streaming, role system instructions, and collapsible navigation.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

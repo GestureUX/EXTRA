@@ -387,6 +387,11 @@ fun CubeWorkspaceScreen(
                 CubeSettingsDialog(
                     oledPitchMode = uiState.oledPitchMode,
                     isWebSearchEnabled = uiState.isWebSearchEnabled,
+                    selectedModel = uiState.selectedModel,
+                    availableModels = uiState.availableModels,
+                    currentSystemInstruction = uiState.customSystemInstruction,
+                    onSelectModel = viewModel::selectModel,
+                    onUpdateSystemInstruction = viewModel::updateCustomSystemInstruction,
                     onToggleOledMode = viewModel::toggleOledPitchMode,
                     onToggleWebSearch = viewModel::toggleWebSearch,
                     onDismiss = { viewModel.setShowSettingsModal(false) }

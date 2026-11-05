@@ -177,7 +177,7 @@ fun CubeTopHeader(
                             expanded = modelDropdownExpanded,
                             onDismissRequest = { modelDropdownExpanded = false },
                             modifier = Modifier
-                                .width(270.dp)
+                                .width(320.dp)
                                 .background(MaterialTheme.colorScheme.surface)
                                 .border(1.dp, CubeCyan.copy(alpha = 0.4f), RoundedCornerShape(12.dp))
                         ) {
@@ -185,7 +185,7 @@ fun CubeTopHeader(
                                 val isCurrent = option.id == selectedModel.id
                                 DropdownMenuItem(
                                     text = {
-                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -199,12 +199,25 @@ fun CubeTopHeader(
                                                     ),
                                                     color = if (isCurrent) CubeCyan else CubeTextPrimary
                                                 )
-                                                Text(
-                                                    text = option.latencyLabel,
-                                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                                    color = CubeCyan
-                                                )
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .background(CubeCyan.copy(alpha = 0.12f))
+                                                        .border(1.dp, CubeCyan.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = option.badge,
+                                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                                                        color = CubeCyan
+                                                    )
+                                                }
                                             }
+                                            Text(
+                                                text = "Role: ${option.roleTitle} (${option.geminiModelId})",
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
+                                                color = CubeElectricBlue
+                                            )
                                             Text(
                                                 text = option.description,
                                                 style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.5.sp),

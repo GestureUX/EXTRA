@@ -457,10 +457,17 @@ fun CubeAssistantMessageCard(
                             bottomEnd = 20.dp
                         )
                     )
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(
+                        if (message.isError) CubeCoralRed.copy(alpha = 0.08f)
+                        else MaterialTheme.colorScheme.surface
+                    )
                     .border(
                         width = 1.dp,
-                        color = if (message.isStreaming) CubeCyan.copy(alpha = 0.45f) else MaterialTheme.colorScheme.outline,
+                        color = when {
+                            message.isError -> CubeCoralRed.copy(alpha = 0.75f)
+                            message.isStreaming -> CubeCyan.copy(alpha = 0.45f)
+                            else -> MaterialTheme.colorScheme.outline
+                        },
                         shape = RoundedCornerShape(
                             topStart = 4.dp,
                             topEnd = 20.dp,

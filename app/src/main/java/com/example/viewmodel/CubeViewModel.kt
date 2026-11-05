@@ -1,7 +1,9 @@
 package com.example.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.data.GeminiChatRepository
 import com.example.model.AttachmentChip
 import com.example.model.ChatMessage
 import com.example.model.ChatSession
@@ -9,17 +11,22 @@ import com.example.model.CubeModelOption
 import com.example.model.FeedbackState
 import com.example.model.QuickSuggestion
 import com.example.model.SuggestionIconType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+
+private const val TAG = "CubeViewModel"
 
 data class CubeUiState(
     val sessions: List<ChatSession> = emptyList(),
@@ -27,6 +34,7 @@ data class CubeUiState(
     val isSidebarExpanded: Boolean = true,
     val selectedModel: CubeModelOption = defaultModels.first(),
     val availableModels: List<CubeModelOption> = defaultModels,
+    val customSystemInstruction: String = defaultModels.first().defaultSystemInstruction,
     val quickSuggestions: List<QuickSuggestion> = defaultSuggestions,
     val inputDraft: String = "",
     val isWebSearchEnabled: Boolean = false,
@@ -55,23 +63,32 @@ data class CubeUiState(
             CubeModelOption(
                 id = "cube-1-pro",
                 name = "Cube 1.0 Pro",
-                badge = "DEEP REASONING",
-                description = "Flagship multi-step synthesis, system architecture, and deep code analysis.",
-                latencyLabel = "~42 tok/s"
+                geminiModelId = "gemini-3.8-flash",
+                badge = "GENERAL TASKS",
+                roleTitle = "Master Neural Generalist",
+                description = "Balanced flagship intelligence for general multi-turn reasoning, comprehensive technical queries, and code analysis.",
+                latencyLabel = "gemini-3.8-flash",
+                defaultSystemInstruction = "You are Cube, an ultra-sleek, futuristic AI assistant inspired by Grok. You provide direct, insightful, witty, and technically rigorous responses with crisp markdown formatting, clear code blocks, and zero unnecessary fluff. Maintain conversation context across all previous turns."
             ),
             CubeModelOption(
                 id = "cube-fast",
                 name = "Cube Fast",
-                badge = "ULTRA-LOW LATENCY",
-                description = "Sub-second streaming optimized for rapid iteration and instant answers.",
-                latencyLabel = "~145 tok/s"
+                geminiModelId = "gemini-3.1-flash-lite",
+                badge = "FAST RESPONSES",
+                roleTitle = "Ultra-Fast Speedster",
+                description = "Sub-second streaming optimized for tasks that should happen fast, rapid iteration, and immediate answers.",
+                latencyLabel = "gemini-3.1-flash-lite",
+                defaultSystemInstruction = "You are Cube Fast, a high-velocity AI assistant optimized for ultra-low latency. Keep answers succinct, high-impact, direct, and actionable without wordiness. Maintain full multi-turn conversational context."
             ),
             CubeModelOption(
                 id = "cube-quantum",
                 name = "Cube Quantum",
-                badge = "CODE & MATH",
-                description = "Specialized formal verification, shaders, SQL telemetry, and algorithms.",
-                latencyLabel = "~68 tok/s"
+                geminiModelId = "gemini-4-argon",
+                badge = "COMPLEX TASKS",
+                roleTitle = "Deep Architecture & STEM Specialist",
+                description = "Most powerful model engineered for particularly complex reasoning, large-scale software architecture, formal verification, and advanced math.",
+                latencyLabel = "gemini-4-argon",
+                defaultSystemInstruction = "You are Cube Quantum, an advanced AI system architect and elite senior software engineer specialized in complex problem-solving, advanced coding, formal logic, mathematics, system blueprints, and deep technical reasoning. Provide exhaustive, rigorous, production-grade solutions."
             )
         )
 
@@ -112,10 +129,11 @@ data class CubeUiState(
     }
 }
 
-class CubeViewModel : ViewModel() {
+class CubeViewModel(
+    private val geminiRepository: GeminiChatRepository = GeminiChatRepository()
+) : ViewModel() {
 
     private var streamingJob: Job? = null
-
     private val initialNewSessionId = "session-welcome-new"
 
     private val _uiState = MutableStateFlow(
@@ -154,10 +172,9 @@ class CubeViewModel : ViewModel() {
                         isUser = false,
                         text = """
                             ### Isometric Glow Shader Architecture
-                            To achieve a crisp **Grok-inspired #00F0FF edge luminance** without geometry aliasing, combine barycentric coordinates with an exponential distance falloff:
+                            To achieve a crisp **#00F0FF edge luminance** without geometry aliasing, combine barycentric coordinates with screen-space derivative falloff:
 
                             ```glsl
-                            // Fragment Shader • Cube 1.0 Pro
                             precision highp float;
                             varying vec3 vBarycentric;
                             uniform float uTime;
@@ -179,83 +196,11 @@ class CubeViewModel : ViewModel() {
                             ```
 
                             • **Anti-aliased Wireframe**: `fwidth()` calculates screen-space derivatives so lines stay 1.5px sharp at any zoom level.
-                            • **Subtle Bloom**: Pair with a single-pass Gaussian blur post-process at `threshold = 0.72`.
+                            • **Subtle Bloom**: Pair with a single-pass Gaussian blur post-process at threshold 0.72.
                         """.trimIndent(),
                         timestamp = "10:14 AM",
                         modelUsed = "Cube 1.0 Pro",
                         thinkingDurationMs = 520
-                    )
-                )
-            ),
-            ChatSession(
-                id = "session-rust-raft",
-                title = "Zero-Trust Rust gRPC Mesh",
-                updatedAt = "2h ago",
-                categoryTag = "ARCH",
-                messages = listOf(
-                    ChatMessage(
-                        id = "msg-seed-3",
-                        isUser = true,
-                        text = "Compare Tonic gRPC streaming vs raw QUIC streams for inter-node Raft heartbeats.",
-                        timestamp = "08:40 AM",
-                        modelUsed = "Cube Quantum",
-                        webSearchUsed = true
-                    ),
-                    ChatMessage(
-                        id = "msg-seed-4",
-                        isUser = false,
-                        text = """
-                            ### Raft Transport Layer Benchmark: Tonic gRPC vs Raw QUIC (`quinn`)
-
-                            1. **Head-of-Line (HoL) Blocking**
-                               • **Tonic (HTTP/2 over TCP)**: Multiplexes streams over a single TCP connection; a single dropped packet stalls all in-flight append-entries.
-                               • **Raw QUIC (`quinn`)**: Independent stream framing over UDP eliminates transport-level HoL blocking, reducing p99 tail latency by **38%**.
-
-                            2. **mTLS & Zero-Trust Identity**
-                               • QUIC embeds TLS 1.3 directly into the 1-RTT (and 0-RTT resumption) handshake, saving 1–2 round trips during node recovery.
-
-                            ```rust
-                            // Recommended QUIC Bi-Directional Heartbeat Stream
-                            pub async fn send_heartbeat(conn: &quinn::Connection, payload: &[u8]) -> anyhow::Result<()> {
-                                let (mut send, mut recv) = conn.open_bi().await?;
-                                send.write_all(payload).await?;
-                                send.finish()?;
-                                Ok(())
-                            }
-                            ```
-                        """.trimIndent(),
-                        timestamp = "08:40 AM",
-                        modelUsed = "Cube Quantum",
-                        webSearchUsed = true,
-                        thinkingDurationMs = 790
-                    )
-                )
-            ),
-            ChatSession(
-                id = "session-cohort-sql",
-                title = "Q4 Retention Cohort Telemetry",
-                updatedAt = "Yesterday",
-                categoryTag = "DATA",
-                messages = listOf(
-                    ChatMessage(
-                        id = "msg-seed-5",
-                        isUser = true,
-                        text = "Give me a quick executive summary of why Day-14 retention drops when onboarding exceeds 3 steps.",
-                        timestamp = "Yesterday",
-                        modelUsed = "Cube Fast"
-                    ),
-                    ChatMessage(
-                        id = "msg-seed-6",
-                        isUser = false,
-                        text = """
-                            ### Onboarding Friction & Day-14 Retention Decay
-                            • **Time-to-First-Value (TTFV)**: Users who execute their first prompt within **45 seconds** exhibit a **2.7x higher Day-14 retention** (`41.8%` vs `15.4%`).
-                            • **Cognitive Drop-off**: Every mandatory configuration step before the workspace view compounds abandonment by ~18%.
-                            • **Actionable Fix**: Defer profile setup and API configuration until after the user completes 3 interactive sessions.
-                        """.trimIndent(),
-                        timestamp = "Yesterday",
-                        modelUsed = "Cube Fast",
-                        thinkingDurationMs = 310
                     )
                 )
             )
@@ -274,9 +219,14 @@ class CubeViewModel : ViewModel() {
         _uiState.update {
             it.copy(
                 selectedModel = model,
-                statusBannerMessage = "Switched engine to ${model.name} (${model.latencyLabel})"
+                customSystemInstruction = model.defaultSystemInstruction,
+                statusBannerMessage = "Engine: ${model.name} (${model.geminiModelId})"
             )
         }
+    }
+
+    fun updateCustomSystemInstruction(instruction: String) {
+        _uiState.update { it.copy(customSystemInstruction = instruction) }
     }
 
     fun updateInputDraft(text: String) {
@@ -302,7 +252,7 @@ class CubeViewModel : ViewModel() {
         _uiState.update {
             it.copy(
                 isVoiceRecording = true,
-                statusBannerMessage = "Listening to neural voice stream…"
+                statusBannerMessage = "Listening to voice stream…"
             )
         }
         viewModelScope.launch {
@@ -493,6 +443,10 @@ class CubeViewModel : ViewModel() {
         _uiState.update { it.copy(statusBannerMessage = null) }
     }
 
+    /**
+     * Sends a message to the Gemini API using Firebase AI Logic.
+     * Maintains full multi-turn conversation history and streams token chunks.
+     */
     fun sendMessage(overridePrompt: String? = null) {
         val currentState = _uiState.value
         val rawPrompt = (overridePrompt ?: currentState.inputDraft).trim()
@@ -513,6 +467,9 @@ class CubeViewModel : ViewModel() {
 
         val activeId = currentState.activeSessionId
         val derivedTitle = deriveTitleFromPrompt(userMsg.text)
+
+        // Capture previous conversation history BEFORE adding the new message
+        val priorMessages = currentState.activeSession?.messages ?: emptyList()
 
         _uiState.update { state ->
             val updatedSessions = state.sessions.map { session ->
@@ -536,87 +493,147 @@ class CubeViewModel : ViewModel() {
         }
 
         val responseId = "msg-cube-${UUID.randomUUID().toString().take(8)}"
-        val fullGeneratedText = craftCubeMockResponse(
-            prompt = userMsg.text,
-            modelName = currentState.selectedModel.name,
-            webSearch = currentState.isWebSearchEnabled,
-            attachments = userMsg.attachments
-        )
+        val startTime = System.currentTimeMillis()
 
         streamingJob = viewModelScope.launch {
-            // Simulate 1-second neural thinking latency as specified in the prompt
-            delay(950)
-
-            val initialBotMsg = ChatMessage(
-                id = responseId,
-                isUser = false,
-                text = "",
-                timestamp = SimpleDateFormat("hh:mm a", Locale.US).format(Date()),
-                modelUsed = currentState.selectedModel.name,
-                isStreaming = true,
-                webSearchUsed = currentState.isWebSearchEnabled,
-                thinkingDurationMs = (420..890).random()
-            )
-
-            _uiState.update { state ->
-                val updatedSessions = state.sessions.map { session ->
-                    if (session.id == activeId) {
-                        session.copy(messages = session.messages + initialBotMsg)
-                    } else session
-                }
-                state.copy(
-                    sessions = updatedSessions,
-                    isWaitingForCube = false,
-                    isStreamingResponse = true
+            try {
+                // Initialize assistant placeholder message
+                val initialBotMsg = ChatMessage(
+                    id = responseId,
+                    isUser = false,
+                    text = "",
+                    timestamp = SimpleDateFormat("hh:mm a", Locale.US).format(Date()),
+                    modelUsed = currentState.selectedModel.name,
+                    isStreaming = true,
+                    webSearchUsed = currentState.isWebSearchEnabled,
+                    thinkingDurationMs = 0
                 )
-            }
 
-            // Stream chunks smoothly
-            val words = fullGeneratedText.split(" ")
-            val builder = StringBuilder()
-            val chunkSize = 3
-            var index = 0
-            while (index < words.size) {
-                val end = (index + chunkSize).coerceAtMost(words.size)
-                val chunk = words.subList(index, end).joinToString(" ")
-                if (builder.isNotEmpty()) builder.append(" ")
-                builder.append(chunk)
-                val partialText = builder.toString()
+                _uiState.update { state ->
+                    val updatedSessions = state.sessions.map { session ->
+                        if (session.id == activeId) {
+                            session.copy(messages = session.messages + initialBotMsg)
+                        } else session
+                    }
+                    state.copy(
+                        sessions = updatedSessions,
+                        isWaitingForCube = false,
+                        isStreamingResponse = true
+                    )
+                }
 
+                // Call Gemini via Firebase AI Logic with 60s timeout
+                val accumulated = StringBuilder()
+                withTimeout(60_000L) {
+                    val streamFlow = geminiRepository.streamMultiTurnChat(
+                        geminiModelId = currentState.selectedModel.geminiModelId,
+                        systemInstruction = currentState.customSystemInstruction,
+                        historyMessages = priorMessages,
+                        newPrompt = userMsg.text
+                    )
+
+                    streamFlow.collect { chunk ->
+                        val chunkText = chunk.text.orEmpty()
+                        if (chunkText.isNotEmpty()) {
+                            accumulated.append(chunkText)
+                            val currentText = accumulated.toString()
+
+                            _uiState.update { state ->
+                                val updatedSessions = state.sessions.map { session ->
+                                    if (session.id == activeId) {
+                                        session.copy(
+                                            messages = session.messages.map { msg ->
+                                                if (msg.id == responseId) {
+                                                    msg.copy(
+                                                        text = currentText,
+                                                        isStreaming = true,
+                                                        thinkingDurationMs = (System.currentTimeMillis() - startTime).toInt()
+                                                    )
+                                                } else msg
+                                            }
+                                        )
+                                    } else session
+                                }
+                                state.copy(sessions = updatedSessions)
+                            }
+                        }
+                    }
+                }
+
+                val finalOutput = accumulated.toString().ifBlank {
+                    "No textual response generated by the model."
+                }
+                val totalDuration = (System.currentTimeMillis() - startTime).toInt()
+
+                // Mark streaming complete
                 _uiState.update { state ->
                     val updatedSessions = state.sessions.map { session ->
                         if (session.id == activeId) {
                             session.copy(
                                 messages = session.messages.map { msg ->
-                                    if (msg.id == responseId) msg.copy(text = partialText, isStreaming = true)
-                                    else msg
+                                    if (msg.id == responseId) {
+                                        msg.copy(
+                                            text = finalOutput,
+                                            isStreaming = false,
+                                            thinkingDurationMs = totalDuration
+                                        )
+                                    } else msg
                                 }
                             )
                         } else session
                     }
-                    state.copy(sessions = updatedSessions)
+                    state.copy(
+                        sessions = updatedSessions,
+                        isStreamingResponse = false,
+                        statusBannerMessage = "Response received via ${currentState.selectedModel.geminiModelId}"
+                    )
                 }
-                index = end
-                delay(28)
-            }
-
-            // Mark streaming complete
-            _uiState.update { state ->
-                val updatedSessions = state.sessions.map { session ->
-                    if (session.id == activeId) {
-                        session.copy(
-                            messages = session.messages.map { msg ->
-                                if (msg.id == responseId) msg.copy(text = fullGeneratedText, isStreaming = false)
-                                else msg
-                            }
-                        )
-                    } else session
-                }
-                state.copy(
-                    sessions = updatedSessions,
-                    isStreamingResponse = false
+            } catch (e: TimeoutCancellationException) {
+                Log.e(TAG, "Gemini inference timed out after 60s", e)
+                handleInferenceError(
+                    activeId = activeId,
+                    responseId = responseId,
+                    errorMessage = "Generation timed out after 60 seconds. Please check your connectivity or try a shorter prompt."
+                )
+            } catch (e: CancellationException) {
+                // Must always rethrow CancellationException for cooperative coroutines
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Gemini generation failed", e)
+                val displayMsg = e.localizedMessage?.takeIf { it.isNotBlank() }
+                    ?: "Gemini request failed (${e.javaClass.simpleName}). Please verify connection and retry."
+                handleInferenceError(
+                    activeId = activeId,
+                    responseId = responseId,
+                    errorMessage = displayMsg
                 )
             }
+        }
+    }
+
+    private fun handleInferenceError(activeId: String, responseId: String, errorMessage: String) {
+        _uiState.update { state ->
+            val updatedSessions = state.sessions.map { session ->
+                if (session.id == activeId) {
+                    session.copy(
+                        messages = session.messages.map { msg ->
+                            if (msg.id == responseId) {
+                                msg.copy(
+                                    text = "⚠️ $errorMessage",
+                                    isStreaming = false,
+                                    isError = true
+                                )
+                            } else msg
+                        }
+                    )
+                } else session
+            }
+            state.copy(
+                sessions = updatedSessions,
+                isWaitingForCube = false,
+                isStreamingResponse = false,
+                statusBannerMessage = "Error: $errorMessage"
+            )
         }
     }
 
@@ -629,17 +646,13 @@ class CubeViewModel : ViewModel() {
         val precedingUserPrompt = session.messages
             .take(msgIndex)
             .lastOrNull { it.isUser }
-            ?.text ?: "Synthesize an alternative optimization strategy."
+            ?.text ?: return
+
+        // Take conversation up to the preceding user message
+        val priorHistory = session.messages.take(msgIndex).dropLast(1)
 
         streamingJob?.cancel()
-
-        val regeneratedText = craftCubeMockResponse(
-            prompt = precedingUserPrompt,
-            modelName = state.selectedModel.name,
-            webSearch = state.isWebSearchEnabled,
-            attachments = emptyList(),
-            isRegeneration = true
-        )
+        val startTime = System.currentTimeMillis()
 
         streamingJob = viewModelScope.launch {
             _uiState.update { current ->
@@ -651,6 +664,7 @@ class CubeViewModel : ViewModel() {
                                     m.copy(
                                         text = "",
                                         isStreaming = true,
+                                        isError = false,
                                         modelUsed = current.selectedModel.name,
                                         feedback = FeedbackState.NONE
                                     )
@@ -662,50 +676,87 @@ class CubeViewModel : ViewModel() {
                 current.copy(
                     sessions = updatedSessions,
                     isStreamingResponse = true,
-                    statusBannerMessage = "Regenerating response with ${current.selectedModel.name}…"
+                    statusBannerMessage = "Regenerating with ${current.selectedModel.geminiModelId}…"
                 )
             }
 
-            delay(550)
-            val words = regeneratedText.split(" ")
-            val builder = StringBuilder()
-            var index = 0
-            while (index < words.size) {
-                val end = (index + 4).coerceAtMost(words.size)
-                val chunk = words.subList(index, end).joinToString(" ")
-                if (builder.isNotEmpty()) builder.append(" ")
-                builder.append(chunk)
-                val currentPartial = builder.toString()
+            try {
+                val accumulated = StringBuilder()
+                withTimeout(60_000L) {
+                    val streamFlow = geminiRepository.streamMultiTurnChat(
+                        geminiModelId = state.selectedModel.geminiModelId,
+                        systemInstruction = state.customSystemInstruction,
+                        historyMessages = priorHistory,
+                        newPrompt = precedingUserPrompt
+                    )
+
+                    streamFlow.collect { chunk ->
+                        val chunkText = chunk.text.orEmpty()
+                        if (chunkText.isNotEmpty()) {
+                            accumulated.append(chunkText)
+                            val currentText = accumulated.toString()
+
+                            _uiState.update { current ->
+                                val updatedSessions = current.sessions.map { s ->
+                                    if (s.id == session.id) {
+                                        s.copy(
+                                            messages = s.messages.map { m ->
+                                                if (m.id == assistantMessageId) {
+                                                    m.copy(
+                                                        text = currentText,
+                                                        isStreaming = true,
+                                                        thinkingDurationMs = (System.currentTimeMillis() - startTime).toInt()
+                                                    )
+                                                } else m
+                                            }
+                                        )
+                                    } else s
+                                }
+                                current.copy(sessions = updatedSessions)
+                            }
+                        }
+                    }
+                }
+
+                val finalOutput = accumulated.toString().ifBlank {
+                    "No content generated by model."
+                }
+                val totalDuration = (System.currentTimeMillis() - startTime).toInt()
 
                 _uiState.update { current ->
                     val updatedSessions = current.sessions.map { s ->
                         if (s.id == session.id) {
                             s.copy(
                                 messages = s.messages.map { m ->
-                                    if (m.id == assistantMessageId) m.copy(text = currentPartial, isStreaming = true)
-                                    else m
+                                    if (m.id == assistantMessageId) {
+                                        m.copy(
+                                            text = finalOutput,
+                                            isStreaming = false,
+                                            thinkingDurationMs = totalDuration
+                                        )
+                                    } else m
                                 }
                             )
                         } else s
                     }
-                    current.copy(sessions = updatedSessions)
+                    current.copy(sessions = updatedSessions, isStreamingResponse = false)
                 }
-                index = end
-                delay(24)
-            }
-
-            _uiState.update { current ->
-                val updatedSessions = current.sessions.map { s ->
-                    if (s.id == session.id) {
-                        s.copy(
-                            messages = s.messages.map { m ->
-                                if (m.id == assistantMessageId) m.copy(text = regeneratedText, isStreaming = false)
-                                else m
-                            }
-                        )
-                    } else s
-                }
-                current.copy(sessions = updatedSessions, isStreamingResponse = false)
+            } catch (e: TimeoutCancellationException) {
+                Log.e(TAG, "Regeneration timed out", e)
+                handleInferenceError(
+                    activeId = session.id,
+                    responseId = assistantMessageId,
+                    errorMessage = "Regeneration timed out after 60 seconds."
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Regeneration failed", e)
+                handleInferenceError(
+                    activeId = session.id,
+                    responseId = assistantMessageId,
+                    errorMessage = e.localizedMessage ?: "Regeneration failed."
+                )
             }
         }
     }
@@ -750,144 +801,5 @@ class CubeViewModel : ViewModel() {
             lower.contains("brainstorm") || lower.contains("idea") -> "IDEAS"
             else -> "SYNTH"
         }
-    }
-
-    private fun craftCubeMockResponse(
-        prompt: String,
-        modelName: String,
-        webSearch: Boolean,
-        attachments: List<AttachmentChip>,
-        isRegeneration: Boolean = false
-    ): String {
-        val lower = prompt.lowercase()
-        val webHeader = if (webSearch) {
-            "🌐 **Live Web Grounding Active** • Indexed 4 real-time technical sources (`latency: 84ms`)\n\n"
-        } else ""
-
-        val attachmentHeader = if (attachments.isNotEmpty()) {
-            "📎 **Parsed Attachments**: ${attachments.joinToString { "`${it.fileName}` (${it.fileSize})" }}\n\n"
-        } else ""
-
-        val regenBadge = if (isRegeneration) "🔄 **Alternative Neural Pass ($modelName)**\n\n" else ""
-
-        val coreBody = when {
-            lower.contains("code") || lower.contains("shader") || lower.contains("webgl") || lower.contains("canvas") -> """
-                ### 3D Isometric Particle Cube Engine
-                Here is a complete, zero-dependency implementation engineered for **60fps rendering** with `#00F0FF` electric cyan edge illumination:
-
-                ```javascript
-                // Cube Neural Renderer • 60fps Canvas Pipeline
-                const canvas = document.getElementById('cubeCanvas');
-                const ctx = canvas.getContext('2d');
-
-                const vertices = [
-                  [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-                  [-1, -1,  1], [1, -1,  1], [1, 1,  1], [-1, 1,  1]
-                ];
-
-                const edges = [
-                  [0,1], [1,2], [2,3], [3,0],
-                  [4,5], [5,6], [6,7], [7,4],
-                  [0,4], [1,5], [2,6], [3,7]
-                ];
-
-                function project([x, y, z], angle) {
-                  const cos = Math.cos(angle), sin = Math.sin(angle);
-                  const rx = x * cos - z * sin;
-                  const rz = x * sin + z * cos;
-                  const scale = 220 / (4 + rz);
-                  return [canvas.width / 2 + rx * scale, canvas.height / 2 + y * scale];
-                }
-
-                function renderFrame(time) {
-                  ctx.fillStyle = '#0B0F17';
-                  ctx.fillRect(0, 0, canvas.width, canvas.height);
-                  ctx.strokeStyle = '#00F0FF';
-                  ctx.shadowColor = '#00F0FF';
-                  ctx.shadowBlur = 14;
-                  ctx.lineWidth = 1.8;
-
-                  const pts = vertices.map(v => project(v, time * 0.0012));
-                  edges.forEach(([i, j]) => {
-                    ctx.beginPath();
-                    ctx.moveTo(...pts[i]);
-                    ctx.lineTo(...pts[j]);
-                    ctx.stroke();
-                  });
-                  requestAnimationFrame(renderFrame);
-                }
-                requestAnimationFrame(renderFrame);
-                ```
-
-                • **Hardware Acceleration**: Uses `shadowBlur` compositing for subtle neon bloom without WebGL context overhead.
-                • **Tip**: Tap the **HTML / CSS / JS Code** button in the top bar anytime to inspect or copy the full single-file web source.
-            """.trimIndent()
-
-            lower.contains("data") || lower.contains("sql") || lower.contains("retention") || lower.contains("cohort") -> """
-                ### Telemetry & Retention Cohort Diagnosis
-                Synthesized by **$modelName** across product activation funnels:
-
-                1. **Primary Bottleneck Identified**
-                   • Users who do not trigger an interactive prompt within the first **90 seconds** account for **68% of Week-2 churn**.
-                   • Adding inline quick-start suggestion cards lifts immediate activation from `31.2%` to `74.6%`.
-
-                ```sql
-                -- Cohort Retention & Activation Velocity Query
-                WITH user_first_action AS (
-                    SELECT
-                        user_id,
-                        DATE_TRUNC('week', created_at) AS cohort_week,
-                        EXTRACT(EPOCH FROM (first_prompt_at - created_at)) AS ttfv_seconds
-                    FROM analytics.user_sessions
-                )
-                SELECT
-                    cohort_week,
-                    COUNT(*) FILTER (WHERE ttfv_seconds <= 60) AS fast_activators,
-                    ROUND(AVG(ttfv_seconds)::numeric, 1) AS avg_ttfv_sec,
-                    ROUND(100.0 * COUNT(*) FILTER (WHERE retained_d14) / COUNT(*), 2) AS d14_retention_pct
-                FROM user_first_action
-                GROUP BY 1
-                ORDER BY 1 DESC;
-                ```
-
-                • **Recommendation**: Pre-populate 4 high-signal prompt cards on the empty welcome view to eliminate blank-canvas hesitation.
-            """.trimIndent()
-
-            lower.contains("brainstorm") || lower.contains("idea") -> """
-                ### 4 High-Conviction AI Product Concepts
-                Engineered for ultra-low latency and high-contrast developer workflows:
-
-                1. **Cube Diff Sentinel**
-                   • Real-time AST semantic analyzer that flags race conditions and memory leaks in `<12ms` as you type.
-                2. **Neural Shader Forge**
-                   • Natural-language to GLSL/WGSL live viewport with instant uniform sliders and frame-time profiling.
-                3. **Zero-Config Telemetry Lens**
-                   • Drops into any PostgreSQL or ClickHouse stream and synthesizes anomaly root-cause trees automatically.
-                4. **Spec-to-UI Matrix**
-                   • Converts dark-mode wireframe descriptions directly into production Tailwind CSS & Jetpack Compose components.
-            """.trimIndent()
-
-            else -> """
-                ### Cube Neural Synthesis ($modelName)
-                I have analyzed your request: *"$prompt"*
-
-                • **Architectural Precision**: Designed around a deep `#0B0F17` stealth canvas with `#00F0FF` electric cyan accents for zero eye strain during extended sessions.
-                • **Interactive Capabilities**:
-                  1. **Collapsible Sidebar** with live session switching, inline rename, and instant deletion.
-                  2. **Floating Grok-Style Console** with focus aura, auto-expanding multi-line input, Web Search grounding toggle, and file attachment chips.
-                  3. **Full Web Code Inspector**: Tap the **`</>`** icon in the header to view and copy the complete standalone HTML, Tailwind CSS, and JavaScript implementation.
-
-                ```json
-                {
-                  "engine": "$modelName",
-                  "theme": "#0B0F17 Stealth Cyan",
-                  "webGrounding": $webSearch,
-                  "status": "READY_FOR_NEXT_COMMAND"
-                }
-                ```
-            """.trimIndent()
-        }
-
-        return "$regenBadge$webHeader$attachmentHeader$coreBody"
     }
 }
