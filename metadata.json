@@ -1,0 +1,6 @@
+{
+  "name": "Cube",
+  "description": "A futuristic, ultra-sleek AI chatbot workspace UI inspired by Grok with live streaming simulation, code sandbox, and collapsible navigation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

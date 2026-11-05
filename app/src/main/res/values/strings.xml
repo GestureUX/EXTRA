@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">Cube</string>
+    <string name="header_title">Cube AI</string>
+    <string name="new_chat">New Chat</string>
+    <string name="clear_chat">Clear Chat</string>
+    <string name="welcome_title">What can Cube help you with today?</string>
+    <string name="welcome_subtitle">Select a quick-start prompt below or type any command into the floating console.</string>
+    <string name="input_placeholder">Ask Cube anything, attach files, or search the web…</string>
+    <string name="web_search">Web Search</string>
+    <string name="attach_file">Attach</string>
+    <string name="voice_input">Voice</string>
+    <string name="send_message">Send message</string>
+    <string name="sidebar_recent_chats">Recent Sessions</string>
+    <string name="sidebar_search_hint">Filter conversations…</string>
+    <string name="user_profile_name">Alex Mercer</string>
+    <string name="user_profile_tier">CUBE PRO • NEURAL TIER</string>
+    <string name="settings_title">Workspace Settings</string>
+    <string name="theme_mode_stealth">Stealth Cyan</string>
+    <string name="theme_mode_oled">OLED Pitch</string>
+    <string name="view_code_inspector">HTML / CSS / JS Code</string>
+    <string name="action_copy">Copy text</string>
+    <string name="action_thumbs_up">Helpful response</string>
+    <string name="action_thumbs_down">Unhelpful response</string>
+    <string name="action_regenerate">Regenerate response</string>
+    <string name="action_rename">Rename conversation</string>
+    <string name="action_delete">Delete conversation</string>
+    <string name="toggle_sidebar">Toggle navigation sidebar</string>
+</resources>
