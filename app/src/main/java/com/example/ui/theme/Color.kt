@@ -2,25 +2,38 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Grok-inspired futuristic dark palette (#0B0F17 base + Electric Cyan & Crisp White highlights)
-val CubeBgStealth = Color(0xFF0B0F17)
-val CubeBgOled = Color(0xFF030508)
-val CubeSurfaceStealth = Color(0xFF111826)
-val CubeSurfaceOled = Color(0xFF0A0E17)
-val CubeCardStealth = Color(0xFF151E2E)
-val CubeCardOled = Color(0xFF0F1522)
+// Claude-inspired warm minimalist palette
+// Warm Light Theme (#FBF9F5 / #F9F6F0 parchment)
+val ClaudeWarmCream = Color(0xFFFBF9F5)
+val ClaudeWarmParchment = Color(0xFFF5F2EB)
+val ClaudeSurfaceLight = Color(0xFFFFFFFF)
+val ClaudeCardLight = Color(0xFFF6F4EE)
+val ClaudeBorderLight = Color(0xFFE7E3D8)
+val ClaudeBorderSubtleLight = Color(0xFFEFECE4)
 
-val CubeCyan = Color(0xFF00F0FF)
-val CubeCyanDim = Color(0xFF00B8C4)
-val CubeCyanGlow = Color(0x3300F0FF)
-val CubeElectricBlue = Color(0xFF38BDF8)
-val CubeNeonPurple = Color(0xFFA855F7)
-val CubeEmerald = Color(0xFF10B981)
-val CubeAmber = Color(0xFFF59E0B)
-val CubeCoralRed = Color(0xFFF43F5E)
+// Warm Dark Theme (#18181B warm charcoal / zinc)
+val ClaudeDarkBg = Color(0xFF18181B)
+val ClaudeDarkSurface = Color(0xFF212124)
+val ClaudeDarkCard = Color(0xFF27272A)
+val ClaudeDarkBorder = Color(0xFF333338)
+val ClaudeDarkBorderSubtle = Color(0xFF2A2A2E)
 
-val CubeTextPrimary = Color(0xFFF8FAFC)
-val CubeTextSecondary = Color(0xFF94A3B8)
-val CubeTextMuted = Color(0xFF64748B)
-val CubeBorderSubtle = Color(0xFF1E293B)
-val CubeBorderHighlight = Color(0xFF334155)
+// Warm Terracotta & Amber Accents (Claude signature)
+val ClaudeTerracotta = Color(0xFFCC785C)
+val ClaudeAmber = Color(0xFFD97706)
+val ClaudeAmberWarm = Color(0xFFB45309)
+val ClaudeTerracottaLight = Color(0xFFFBF1EC)
+val ClaudeTerracottaDark = Color(0xFF38231C)
+
+// High-contrast editorial typography text tokens
+val ClaudeTextPrimaryLight = Color(0xFF1C1917)
+val ClaudeTextSecondaryLight = Color(0xFF68625A)
+val ClaudeTextMutedLight = Color(0xFF989186)
+
+val ClaudeTextPrimaryDark = Color(0xFFF5F5F4)
+val ClaudeTextSecondaryDark = Color(0xFFA8A29E)
+val ClaudeTextMutedDark = Color(0xFF71717A)
+
+// Status colors
+val ClaudeSuccessGreen = Color(0xFF16A34A)
+val ClaudeErrorRose = Color(0xFFDC2626)

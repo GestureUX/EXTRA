@@ -18,12 +18,10 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBars
@@ -61,9 +59,8 @@ import com.example.ui.components.CubeWebCodeInspectorDialog
 import com.example.ui.components.CubeWelcomeEmptyState
 import com.example.ui.components.RenameSessionDialog
 import com.example.ui.components.UserMessageBubble
-import com.example.ui.theme.CubeCyan
-import com.example.ui.theme.CubeElectricBlue
-import com.example.ui.theme.CubeTextPrimary
+import com.example.ui.theme.ClaudeAmber
+import com.example.ui.theme.ClaudeTerracotta
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.CubeViewModel
 import kotlinx.coroutines.delay
@@ -83,38 +80,24 @@ fun CubeWorkspaceScreen(
         }
     }
 
-    MyApplicationTheme(oledPitchMode = uiState.oledPitchMode) {
+    MyApplicationTheme(darkTheme = uiState.isDarkTheme) {
         BoxWithConstraints(
             modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .drawBehind {
-                    // Subtle futuristic radial aura + precision dot matrix grid
+                    // Subtle warm ambient radial aura
                     drawCircle(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                CubeCyan.copy(alpha = 0.06f),
-                                CubeElectricBlue.copy(alpha = 0.02f),
+                                ClaudeTerracotta.copy(alpha = if (uiState.isDarkTheme) 0.04f else 0.035f),
+                                ClaudeAmber.copy(alpha = if (uiState.isDarkTheme) 0.02f else 0.015f),
                                 Color.Transparent
                             ),
-                            center = Offset(size.width * 0.5f, size.height * 0.18f),
-                            radius = size.minDimension * 0.75f
+                            center = Offset(size.width * 0.5f, size.height * 0.12f),
+                            radius = size.minDimension * 0.8f
                         )
                     )
-                    val step = 32.dp.toPx()
-                    var x = step
-                    while (x < size.width) {
-                        var y = step
-                        while (y < size.height) {
-                            drawCircle(
-                                color = CubeCyan.copy(alpha = 0.045f),
-                                radius = 1.dp.toPx(),
-                                center = Offset(x, y)
-                            )
-                            y += step
-                        }
-                        x += step
-                    }
                 }
         ) {
             val isWideScreen = maxWidth >= 760.dp
@@ -166,13 +149,13 @@ fun CubeWorkspaceScreen(
                             sessions = uiState.sessions,
                             activeSessionId = uiState.activeSessionId,
                             searchQuery = uiState.searchHistoryQuery,
-                            oledPitchMode = uiState.oledPitchMode,
+                            isDarkTheme = uiState.isDarkTheme,
                             onSearchQueryChange = viewModel::updateSearchHistoryQuery,
                             onNewChat = viewModel::startNewChat,
                             onSelectSession = viewModel::selectSession,
                             onRenameSession = viewModel::openRenameDialog,
                             onDeleteSession = viewModel::deleteSession,
-                            onToggleThemeMode = viewModel::toggleOledPitchMode,
+                            onToggleThemeMode = viewModel::toggleThemeMode,
                             onOpenSettings = { viewModel.setShowSettingsModal(true) },
                             onOpenCodeInspector = { viewModel.setShowCodeInspectorModal(true) },
                             onCollapseSidebar = viewModel::toggleSidebar
@@ -192,8 +175,10 @@ fun CubeWorkspaceScreen(
                             selectedModel = uiState.selectedModel,
                             availableModels = uiState.availableModels,
                             showMenuButton = !isWideScreen || !uiState.isSidebarExpanded,
+                            isDarkTheme = uiState.isDarkTheme,
                             onToggleSidebar = viewModel::toggleSidebar,
                             onSelectModel = viewModel::selectModel,
+                            onToggleTheme = viewModel::toggleThemeMode,
                             onClearChat = viewModel::clearCurrentChat,
                             onOpenCodeInspector = { viewModel.setShowCodeInspectorModal(true) }
                         )
@@ -209,7 +194,7 @@ fun CubeWorkspaceScreen(
                                 start = 16.dp,
                                 end = 16.dp,
                                 top = 16.dp,
-                                bottom = 190.dp
+                                bottom = 180.dp
                             ),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -231,7 +216,7 @@ fun CubeWorkspaceScreen(
                                 ) { message ->
                                     Box(
                                         modifier = Modifier
-                                            .widthIn(max = 780.dp)
+                                            .widthIn(max = 760.dp)
                                             .fillMaxWidth()
                                     ) {
                                         if (message.isUser) {
@@ -264,7 +249,7 @@ fun CubeWorkspaceScreen(
                                     item(key = "thinking_indicator") {
                                         Box(
                                             modifier = Modifier
-                                                .widthIn(max = 780.dp)
+                                                .widthIn(max = 760.dp)
                                                 .fillMaxWidth()
                                         ) {
                                             CubeThinkingIndicator(
@@ -284,33 +269,30 @@ fun CubeWorkspaceScreen(
                         exit = fadeOut() + slideOutVertically(targetOffsetY = { -it }),
                         modifier = Modifier
                             .align(Alignment.TopCenter)
-                            .padding(top = 74.dp)
+                            .padding(top = 64.dp)
                     ) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(999.dp))
-                                .background(Color(0xFF0E1726).copy(alpha = 0.95f))
-                                .border(1.dp, CubeCyan.copy(alpha = 0.6f), RoundedCornerShape(999.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, ClaudeTerracotta.copy(alpha = 0.5f), RoundedCornerShape(999.dp))
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
                             Text(
                                 text = uiState.statusBannerMessage.orEmpty(),
                                 style = MaterialTheme.typography.labelLarge.copy(fontSize = 12.sp),
-                                color = CubeCyan
+                                color = ClaudeTerracotta
                             )
                         }
                     }
 
-                    // Floating Grok-Style Bottom Input Console
+                    // Floating Claude-Style Bottom Input Console
                     CubeFloatingInputConsole(
                         inputText = uiState.inputDraft,
-                        isWebSearchEnabled = uiState.isWebSearchEnabled,
                         isVoiceRecording = uiState.isVoiceRecording,
                         stagedAttachments = uiState.stagedAttachments,
                         onInputTextChange = viewModel::updateInputDraft,
                         onSendMessage = { viewModel.sendMessage() },
-                        onToggleWebSearch = viewModel::toggleWebSearch,
-                        onToggleVoiceInput = viewModel::toggleVoiceSimulation,
                         onAddAttachment = viewModel::addMockAttachment,
                         onRemoveAttachment = viewModel::removeAttachment,
                         modifier = Modifier.align(Alignment.BottomCenter)
@@ -328,7 +310,7 @@ fun CubeWorkspaceScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.65f))
+                            .background(Color.Black.copy(alpha = 0.45f))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
@@ -351,7 +333,7 @@ fun CubeWorkspaceScreen(
                             sessions = uiState.sessions,
                             activeSessionId = uiState.activeSessionId,
                             searchQuery = uiState.searchHistoryQuery,
-                            oledPitchMode = uiState.oledPitchMode,
+                            isDarkTheme = uiState.isDarkTheme,
                             onSearchQueryChange = viewModel::updateSearchHistoryQuery,
                             onNewChat = {
                                 viewModel.startNewChat()
@@ -363,7 +345,7 @@ fun CubeWorkspaceScreen(
                             },
                             onRenameSession = viewModel::openRenameDialog,
                             onDeleteSession = viewModel::deleteSession,
-                            onToggleThemeMode = viewModel::toggleOledPitchMode,
+                            onToggleThemeMode = viewModel::toggleThemeMode,
                             onOpenSettings = { viewModel.setShowSettingsModal(true) },
                             onOpenCodeInspector = { viewModel.setShowCodeInspectorModal(true) },
                             onCollapseSidebar = { viewModel.setSidebarExpanded(false) }
@@ -385,14 +367,14 @@ fun CubeWorkspaceScreen(
 
             if (uiState.showSettingsModal) {
                 CubeSettingsDialog(
-                    oledPitchMode = uiState.oledPitchMode,
+                    isDarkTheme = uiState.isDarkTheme,
                     isWebSearchEnabled = uiState.isWebSearchEnabled,
                     selectedModel = uiState.selectedModel,
                     availableModels = uiState.availableModels,
                     currentSystemInstruction = uiState.customSystemInstruction,
                     onSelectModel = viewModel::selectModel,
                     onUpdateSystemInstruction = viewModel::updateCustomSystemInstruction,
-                    onToggleOledMode = viewModel::toggleOledPitchMode,
+                    onToggleThemeMode = viewModel::toggleThemeMode,
                     onToggleWebSearch = viewModel::toggleWebSearch,
                     onDismiss = { viewModel.setShowSettingsModal(false) }
                 )

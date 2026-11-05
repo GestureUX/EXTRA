@@ -1,6 +1,6 @@
 {
   "name": "Cube",
-  "description": "A futuristic, ultra-sleek AI chatbot workspace powered by multi-turn Gemini 3.8 Flash, 3.1 Flash-Lite, and 4 Argon with streaming, role system instructions, and collapsible navigation.",
+  "description": "A Claude-inspired minimalist AI chatbot workspace with warm editorial typography, terracotta accents, and multi-turn conversational responses powered by Google AI Studio's Gemini 1.5 Flash API.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

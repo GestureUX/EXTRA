@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -44,7 +45,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -54,20 +54,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.model.ChatSession
-import com.example.ui.theme.CubeCoralRed
-import com.example.ui.theme.CubeCyan
-import com.example.ui.theme.CubeElectricBlue
-import com.example.ui.theme.CubeEmerald
-import com.example.ui.theme.CubeTextMuted
-import com.example.ui.theme.CubeTextPrimary
-import com.example.ui.theme.CubeTextSecondary
+import com.example.ui.theme.ClaudeAmber
+import com.example.ui.theme.ClaudeErrorRose
+import com.example.ui.theme.ClaudeTerracotta
 
+/**
+ * Claude-inspired clean warm sidebar navigation drawer.
+ */
 @Composable
 fun CubeSidebar(
     sessions: List<ChatSession>,
     activeSessionId: String,
     searchQuery: String,
-    oledPitchMode: Boolean,
+    isDarkTheme: Boolean,
     onSearchQueryChange: (String) -> Unit,
     onNewChat: () -> Unit,
     onSelectSession: (String) -> Unit,
@@ -90,26 +89,26 @@ fun CubeSidebar(
 
     Surface(
         modifier = modifier
-            .width(300.dp)
+            .width(290.dp)
             .fillMaxHeight()
             .testTag("cube_sidebar"),
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp
+        tonalElevation = 1.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
                 .border(
                     width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.outlineVariant,
                     shape = RoundedCornerShape(0.dp)
                 )
         ) {
-            // 1. TOP SECTION: Brand Logo ("Cube" + futuristic cube icon) + Collapse + "New Chat" button
+            // Top Section: Claude Asterism Brand + Collapse button + New Chat button
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .padding(horizontal = 14.dp, vertical = 14.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -118,138 +117,101 @@ fun CubeSidebar(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        CubeIsometricIcon(size = 36.dp, animated = true)
-                        Column {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = "CUBE",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.5.sp
-                                    ),
-                                    color = CubeTextPrimary
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(CubeCyan.copy(alpha = 0.14f))
-                                        .border(1.dp, CubeCyan.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = "AI 2.4",
-                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                                        color = CubeCyan
-                                    )
-                                }
-                            }
-                            Text(
-                                text = "NEURAL INTERFACE",
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
-                                color = CubeTextMuted
-                            )
-                        }
+                        ClaudeAsterismIcon(size = 28.dp, tint = ClaudeTerracotta)
+                        Text(
+                            text = "Cube",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 20.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
                     }
 
                     IconButton(
                         onClick = onCollapseSidebar,
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(36.dp)
                             .testTag("sidebar_collapse_button")
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                             contentDescription = stringResource(R.string.toggle_sidebar),
-                            tint = CubeTextSecondary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Prominent "New Chat" Button with Cyan Neon Border & Subtle Gradient
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            Brush.horizontalGradient(
-                                colors = listOf(
-                                    CubeCyan.copy(alpha = 0.18f),
-                                    CubeElectricBlue.copy(alpha = 0.10f)
-                                )
-                            )
-                        )
-                        .border(
-                            width = 1.dp,
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(CubeCyan.copy(alpha = 0.7f), CubeElectricBlue.copy(alpha = 0.4f))
-                            ),
-                            shape = RoundedCornerShape(14.dp)
-                        )
-                        .clickable(onClick = onNewChat)
-                        .testTag("sidebar_new_chat_button"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.new_chat),
-                            tint = CubeCyan,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.new_chat),
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.6.sp
-                            ),
-                            color = CubeTextPrimary
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Compact Filter / Search bar for recent sessions
+                // New Chat Button with subtle warm terracotta styling
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(ClaudeTerracotta.copy(alpha = 0.12f))
+                        .border(
+                            width = 1.dp,
+                            color = ClaudeTerracotta.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable(onClick = onNewChat)
+                        .padding(horizontal = 14.dp)
+                        .testTag("sidebar_new_chat_button"),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.new_chat),
+                        tint = ClaudeTerracotta,
+                        modifier = Modifier.size(17.dp)
+                    )
+                    Text(
+                        text = "New chat",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Clean search filter bar
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchQueryChange,
                     placeholder = {
                         Text(
-                            text = stringResource(R.string.sidebar_search_hint),
+                            text = "Search chats…",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
-                            color = CubeTextMuted
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search sessions",
-                            tint = CubeTextMuted,
-                            modifier = Modifier.size(16.dp)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(15.dp)
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(
                                 onClick = { onSearchQueryChange("") },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(28.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Clear filter",
-                                    tint = CubeTextSecondary,
-                                    modifier = Modifier.size(14.dp)
+                                    contentDescription = "Clear",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(13.dp)
                                 )
                             }
                         }
@@ -257,13 +219,13 @@ fun CubeSidebar(
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 12.5.sp,
-                        color = CubeTextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.4f),
-                        focusedBorderColor = CubeCyan.copy(alpha = 0.6f),
+                        focusedContainerColor = MaterialTheme.colorScheme.background,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
+                        focusedBorderColor = ClaudeTerracotta,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     ),
                     modifier = Modifier
@@ -272,25 +234,25 @@ fun CubeSidebar(
                 )
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // 2. MIDDLE SECTION: Recent Chat History List with Rename & Delete icons
+            // Middle Section: Recent Chat History
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(R.string.sidebar_recent_chats).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = CubeTextMuted
+                    text = "Recent chats",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.5.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "${filteredSessions.size} THREADS",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = CubeCyan.copy(alpha = 0.8f)
+                    text = "${filteredSessions.size}",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
+                    color = ClaudeTerracotta
                 )
             }
 
@@ -299,8 +261,8 @@ fun CubeSidebar(
                     .weight(1f)
                     .fillMaxWidth()
                     .testTag("sidebar_history_list"),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(filteredSessions, key = { it.id }) { session ->
                     val isSelected = session.id == activeSessionId
@@ -314,29 +276,23 @@ fun CubeSidebar(
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // 3. BOTTOM SECTION: HTML/CSS/JS Inspector Shortcut, Theme/Mode Indicator, User Profile & Settings
+            // Bottom Section: Mode switch, Code inspector, User Profile & Settings
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.55f))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Theme / Mode Indicator row
+                // Theme toggle row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.65f))
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = RoundedCornerShape(12.dp)
-                        )
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         .clickable(onClick = onToggleThemeMode)
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                         .testTag("sidebar_theme_toggle"),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -345,118 +301,66 @@ fun CubeSidebar(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(if (oledPitchMode) CubeEmerald else CubeCyan)
-                        )
                         Icon(
-                            imageVector = Icons.Default.DarkMode,
+                            imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
                             contentDescription = null,
-                            tint = CubeCyan,
+                            tint = ClaudeAmber,
                             modifier = Modifier.size(15.dp)
                         )
                         Text(
-                            text = if (oledPitchMode) {
-                                stringResource(R.string.theme_mode_oled)
-                            } else {
-                                stringResource(R.string.theme_mode_stealth)
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = CubeTextPrimary
+                            text = if (isDarkTheme) "Warm Dark (#18181B)" else "Warm Light (#FBF9F5)",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Text(
-                        text = if (oledPitchMode) "#030508" else "#0B0F17",
+                        text = "Switch",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = CubeCyan
+                        color = ClaudeTerracotta
                     )
                 }
 
-                // Export / Inspect Single-File HTML/CSS/JS Source Button
+                // User Profile & Settings
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(CubeCyan.copy(alpha = 0.08f))
-                        .border(1.dp, CubeCyan.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                        .clickable(onClick = onOpenCodeInspector)
-                        .padding(horizontal = 12.dp, vertical = 10.dp)
-                        .testTag("sidebar_code_inspector_button"),
+                        .clip(RoundedCornerShape(10.dp))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Code,
-                            contentDescription = null,
-                            tint = CubeCyan,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = stringResource(R.string.view_code_inspector),
-                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 12.sp),
-                            color = CubeTextPrimary
-                        )
-                    }
-                    Text(
-                        text = "VIEW",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                        color = CubeCyan
-                    )
-                }
-
-                // User Profile + Settings Icon
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(11.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(CubeCyan, CubeElectricBlue)
-                                    )
-                                ),
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(ClaudeTerracotta),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "AM",
-                                style = MaterialTheme.typography.labelLarge.copy(
+                                text = "A",
+                                style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF04131A)
+                                    color = Color.White
                                 )
                             )
                         }
                         Column {
                             Text(
-                                text = stringResource(R.string.user_profile_name),
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.5.sp),
-                                color = CubeTextPrimary,
+                                text = "Alex Mercer",
+                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 13.sp),
+                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = stringResource(R.string.user_profile_tier),
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
-                                color = CubeCyan
+                                text = "Gemini 1.5 Flash Free Tier",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                color = ClaudeTerracotta
                             )
                         }
                     }
@@ -464,13 +368,14 @@ fun CubeSidebar(
                     IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(36.dp)
                             .testTag("sidebar_settings_button")
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = stringResource(R.string.settings_title),
-                            tint = CubeTextSecondary
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(17.dp)
                         )
                     }
                 }
@@ -489,98 +394,85 @@ private fun SidebarSessionItem(
 ) {
     val bgColor by animateColorAsState(
         targetValue = if (isSelected) {
-            CubeCyan.copy(alpha = 0.13f)
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-        },
-        label = "session_bg"
-    )
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected) {
-            CubeCyan.copy(alpha = 0.55f)
+            MaterialTheme.colorScheme.surfaceVariant
         } else {
             Color.Transparent
         },
-        label = "session_border"
+        label = "session_bg"
     )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(bgColor)
-            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .border(
+                width = 1.dp,
+                color = if (isSelected) MaterialTheme.colorScheme.outline else Color.Transparent,
+                shape = RoundedCornerShape(10.dp)
+            )
             .clickable(onClick = onSelect)
-            .padding(start = 12.dp, end = 4.dp, top = 6.dp, bottom = 6.dp)
+            .padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp)
             .testTag("session_item_${session.id}"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.weight(1f)
         ) {
             Icon(
                 imageVector = Icons.Default.ChatBubbleOutline,
                 contentDescription = null,
-                tint = if (isSelected) CubeCyan else CubeTextMuted,
-                modifier = Modifier.size(16.dp)
+                tint = if (isSelected) ClaudeTerracotta else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(15.dp)
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = session.title,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                        fontSize = 13.sp,
+                        fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
                     ),
-                    color = if (isSelected) CubeTextPrimary else CubeTextSecondary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Text(
-                        text = session.categoryTag,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                        color = if (isSelected) CubeCyan else CubeTextMuted
-                    )
-                    Text(
-                        text = "• ${session.updatedAt}",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
-                        color = CubeTextMuted
-                    )
-                }
+                Text(
+                    text = session.updatedAt,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
-        // Rename & Delete Action Icons
+        // Rename & Delete Actions
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
                 onClick = onRename,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(32.dp)
                     .testTag("rename_session_${session.id}")
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = stringResource(R.string.action_rename),
-                    tint = CubeTextSecondary,
-                    modifier = Modifier.size(15.dp)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(13.dp)
                 )
             }
             IconButton(
                 onClick = onDelete,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(32.dp)
                     .testTag("delete_session_${session.id}")
             ) {
                 Icon(
                     imageVector = Icons.Default.DeleteOutline,
                     contentDescription = stringResource(R.string.action_delete),
-                    tint = CubeCoralRed.copy(alpha = 0.8f),
-                    modifier = Modifier.size(16.dp)
+                    tint = ClaudeErrorRose.copy(alpha = 0.7f),
+                    modifier = Modifier.size(14.dp)
                 )
             }
         }

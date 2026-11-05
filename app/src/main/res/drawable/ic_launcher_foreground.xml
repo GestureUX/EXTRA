@@ -3,6 +3,6 @@
     <item
         android:width="66dp"
         android:height="66dp"
-        android:drawable="@drawable/img_cube_launcher_1793201681287"
+        android:drawable="@drawable/img_claude_cube_icon_1793890863239"
         android:gravity="center" />
 </layer-list>

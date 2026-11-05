@@ -56,11 +56,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.data.CubeWebSourceRepository
 import com.example.model.ChatSession
-import com.example.ui.theme.CubeCyan
-import com.example.ui.theme.CubeEmerald
-import com.example.ui.theme.CubeTextMuted
-import com.example.ui.theme.CubeTextPrimary
-import com.example.ui.theme.CubeTextSecondary
+import com.example.model.CubeModelOption
+import com.example.ui.theme.ClaudeAmber
+import com.example.ui.theme.ClaudeSuccessGreen
+import com.example.ui.theme.ClaudeTerracotta
 import com.example.ui.theme.JetBrainsMonoFontFamily
 
 @Composable
@@ -74,18 +73,18 @@ fun RenameSessionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
-        titleContentColor = CubeTextPrimary,
-        textContentColor = CubeTextSecondary,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         title = {
             Text(
-                text = "Rename Conversation",
+                text = "Rename conversation",
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Update the session label in your Cube sidebar history:",
+                    text = "Update the title of this conversation:",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 OutlinedTextField(
@@ -93,10 +92,10 @@ fun RenameSessionDialog(
                     onValueChange = { draftTitle = it },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = CubeCyan,
+                        focusedBorderColor = ClaudeTerracotta,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedTextColor = CubeTextPrimary,
-                        unfocusedTextColor = CubeTextPrimary
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -108,17 +107,17 @@ fun RenameSessionDialog(
             Button(
                 onClick = { onConfirmRename(draftTitle) },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CubeCyan,
-                    contentColor = Color(0xFF03171C)
+                    containerColor = ClaudeTerracotta,
+                    contentColor = Color.White
                 ),
                 modifier = Modifier.testTag("rename_dialog_confirm")
             ) {
-                Text("Save", fontWeight = FontWeight.Bold)
+                Text("Save", fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = CubeTextSecondary)
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )
@@ -126,14 +125,14 @@ fun RenameSessionDialog(
 
 @Composable
 fun CubeSettingsDialog(
-    oledPitchMode: Boolean,
+    isDarkTheme: Boolean,
     isWebSearchEnabled: Boolean,
-    selectedModel: com.example.model.CubeModelOption,
-    availableModels: List<com.example.model.CubeModelOption>,
+    selectedModel: CubeModelOption,
+    availableModels: List<CubeModelOption>,
     currentSystemInstruction: String,
-    onSelectModel: (com.example.model.CubeModelOption) -> Unit,
+    onSelectModel: (CubeModelOption) -> Unit,
     onUpdateSystemInstruction: (String) -> Unit,
-    onToggleOledMode: () -> Unit,
+    onToggleThemeMode: () -> Unit,
     onToggleWebSearch: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -142,15 +141,15 @@ fun CubeSettingsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
-        titleContentColor = CubeTextPrimary,
+        titleContentColor = MaterialTheme.colorScheme.onSurface,
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                CubeIsometricIcon(size = 28.dp)
+                ClaudeAsterismIcon(size = 28.dp, tint = ClaudeTerracotta)
                 Text(
-                    text = "Cube Neural Settings",
+                    text = "Cube Settings",
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -162,9 +161,9 @@ fun CubeSettingsDialog(
             ) {
                 // Section: Chatbot Engine & Specific Role
                 Text(
-                    text = "ACTIVE CHATBOT MODEL & ROLE",
+                    text = "GEMINI MODEL ENGINE",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                    color = CubeCyan
+                    color = ClaudeTerracotta
                 )
 
                 availableModels.forEach { modelOption ->
@@ -174,12 +173,12 @@ fun CubeSettingsDialog(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (isSelected) CubeCyan.copy(alpha = 0.12f)
+                                if (isSelected) ClaudeTerracotta.copy(alpha = 0.08f)
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             )
                             .border(
                                 width = 1.dp,
-                                color = if (isSelected) CubeCyan else MaterialTheme.colorScheme.outline,
+                                color = if (isSelected) ClaudeTerracotta else MaterialTheme.colorScheme.outline,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .clickable {
@@ -196,24 +195,24 @@ fun CubeSettingsDialog(
                         ) {
                             Text(
                                 text = modelOption.name,
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = if (isSelected) CubeCyan else CubeTextPrimary
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = if (isSelected) ClaudeTerracotta else MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = modelOption.geminiModelId,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = CubeCyan
+                                color = ClaudeTerracotta
                             )
                         }
                         Text(
-                            text = "Role: ${modelOption.roleTitle}",
+                            text = modelOption.roleTitle,
                             style = MaterialTheme.typography.labelMedium,
-                            color = CubeTextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = modelOption.description,
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 11.5.sp),
-                            color = CubeTextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -227,9 +226,9 @@ fun CubeSettingsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "ROLE SYSTEM INSTRUCTION",
+                        text = "SYSTEM INSTRUCTION",
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
-                        color = CubeCyan
+                        color = ClaudeTerracotta
                     )
                     TextButton(
                         onClick = {
@@ -237,7 +236,7 @@ fun CubeSettingsDialog(
                             onUpdateSystemInstruction(selectedModel.defaultSystemInstruction)
                         }
                     ) {
-                        Text("Reset Default", fontSize = 11.sp, color = CubeCyan)
+                        Text("Reset Default", fontSize = 11.sp, color = ClaudeTerracotta)
                     }
                 }
 
@@ -251,16 +250,16 @@ fun CubeSettingsDialog(
                     maxLines = 4,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = CubeCyan,
+                        focusedBorderColor = ClaudeTerracotta,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                        focusedTextColor = CubeTextPrimary,
-                        unfocusedTextColor = CubeTextPrimary
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Theme Mode Switch
+                // Theme Mode Switch (Warm Light #FBF9F5 vs Warm Dark #18181B)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -268,22 +267,22 @@ fun CubeSettingsDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "OLED Pitch Matrix (#030508)",
+                            text = "Warm Dark Theme (#18181B)",
                             style = MaterialTheme.typography.titleMedium,
-                            color = CubeTextPrimary
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Switch between #0B0F17 Stealth and ultra-deep OLED black.",
+                            text = "Toggle between Claude Warm Light (#FBF9F5) and Warm Dark (#18181B).",
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
-                            color = CubeTextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Switch(
-                        checked = oledPitchMode,
-                        onCheckedChange = { onToggleOledMode() },
+                        checked = isDarkTheme,
+                        onCheckedChange = { onToggleThemeMode() },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color(0xFF03171C),
-                            checkedTrackColor = CubeCyan
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = ClaudeTerracotta
                         )
                     )
                 }
@@ -293,11 +292,11 @@ fun CubeSettingsDialog(
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CubeCyan,
-                    contentColor = Color(0xFF03171C)
+                    containerColor = ClaudeTerracotta,
+                    contentColor = Color.White
                 )
             ) {
-                Text("Done", fontWeight = FontWeight.Bold)
+                Text("Done", fontWeight = FontWeight.SemiBold)
             }
         }
     )
@@ -321,17 +320,17 @@ fun CubeWebCodeInspectorDialog(
                 .widthIn(max = 860.dp)
                 .fillMaxWidth(0.94f)
                 .fillMaxHeight(0.86f)
-                .clip(RoundedCornerShape(22.dp))
-                .border(1.5.dp, CubeCyan.copy(alpha = 0.55f), RoundedCornerShape(22.dp))
+                .clip(RoundedCornerShape(20.dp))
+                .border(1.5.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(20.dp))
                 .testTag("web_code_inspector_modal"),
-            color = Color(0xFF080C14)
+            color = MaterialTheme.colorScheme.surface
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Modal Header
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF0F1624))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(horizontal = 18.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -343,18 +342,18 @@ fun CubeWebCodeInspectorDialog(
                         Icon(
                             imageVector = Icons.Default.Code,
                             contentDescription = null,
-                            tint = CubeCyan
+                            tint = ClaudeTerracotta
                         )
                         Column {
                             Text(
-                                text = "Cube UI — Full Single-File HTML / Tailwind CSS / JS",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = CubeTextPrimary
+                                text = "Cube UI — Single-File HTML / Tailwind CSS / JS",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Ready-to-run responsive web mockup file (index.html)",
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
-                                color = CubeTextMuted
+                                text = "Claude warm aesthetic mockup (index.html)",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -370,8 +369,8 @@ fun CubeWebCodeInspectorDialog(
                                 onCopyCode()
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (copied) CubeEmerald else CubeCyan,
-                                contentColor = Color(0xFF03171C)
+                                containerColor = if (copied) ClaudeSuccessGreen else ClaudeTerracotta,
+                                contentColor = Color.White
                             ),
                             modifier = Modifier.testTag("copy_full_html_button")
                         ) {
@@ -382,8 +381,8 @@ fun CubeWebCodeInspectorDialog(
                             )
                             Spacer(modifier = Modifier.size(6.dp))
                             Text(
-                                text = if (copied) "Copied HTML" else "Copy Full Code",
-                                fontWeight = FontWeight.Bold
+                                text = if (copied) "Copied HTML" else "Copy Code",
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
 
@@ -394,7 +393,7 @@ fun CubeWebCodeInspectorDialog(
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Close code inspector",
-                                tint = CubeTextSecondary
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -416,7 +415,7 @@ fun CubeWebCodeInspectorDialog(
                             fontSize = 12.sp,
                             lineHeight = 18.sp
                         ),
-                        color = Color(0xFFE2E8F0)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

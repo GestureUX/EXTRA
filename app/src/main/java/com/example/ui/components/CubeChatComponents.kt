@@ -31,15 +31,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Hub
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.ThumbDown
@@ -56,7 +51,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.testTag
@@ -70,18 +64,15 @@ import com.example.R
 import com.example.model.ChatMessage
 import com.example.model.FeedbackState
 import com.example.model.QuickSuggestion
-import com.example.model.SuggestionIconType
-import com.example.ui.theme.CubeAmber
-import com.example.ui.theme.CubeCoralRed
-import com.example.ui.theme.CubeCyan
-import com.example.ui.theme.CubeElectricBlue
-import com.example.ui.theme.CubeEmerald
-import com.example.ui.theme.CubeNeonPurple
-import com.example.ui.theme.CubeTextMuted
-import com.example.ui.theme.CubeTextPrimary
-import com.example.ui.theme.CubeTextSecondary
+import com.example.ui.theme.ClaudeAmber
+import com.example.ui.theme.ClaudeErrorRose
+import com.example.ui.theme.ClaudeSuccessGreen
+import com.example.ui.theme.ClaudeTerracotta
 import com.example.ui.theme.JetBrainsMonoFontFamily
 
+/**
+ * Claude-inspired warm Welcome View with text-only suggestion prompt chips.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CubeWelcomeEmptyState(
@@ -93,161 +84,111 @@ fun CubeWelcomeEmptyState(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 20.dp)
+            .padding(horizontal = 20.dp, vertical = 24.dp)
             .testTag("welcome_empty_state"),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Central glowing Cube Emblem
-        CubeHeroEmblem(size = 86.dp)
+        // Claude signature warm terracotta asterism emblem
+        CubeHeroEmblem(size = 72.dp)
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // Active engine badge
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(999.dp))
-                .background(CubeCyan.copy(alpha = 0.10f))
-                .border(1.dp, CubeCyan.copy(alpha = 0.35f), RoundedCornerShape(999.dp))
-                .padding(horizontal = 14.dp, vertical = 5.dp)
-        ) {
-            Text(
-                text = "$selectedModelName • NEURAL CORE ONLINE",
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
-                color = CubeCyan
-            )
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Greeting Title
+        // Claude-style Serif greeting
         Text(
-            text = stringResource(R.string.welcome_title),
-            style = MaterialTheme.typography.headlineLarge,
-            color = CubeTextPrimary,
+            text = "How can Cube help you today?",
+            style = MaterialTheme.typography.displayLarge.copy(fontSize = 30.sp),
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(max = 580.dp)
+            modifier = Modifier.widthIn(max = 560.dp)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(R.string.welcome_subtitle),
+            text = "Powered by Google AI Studio's Gemini 1.5 Flash API with full multi-turn conversation memory.",
             style = MaterialTheme.typography.bodyMedium,
-            color = CubeTextSecondary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(max = 500.dp)
+            modifier = Modifier.widthIn(max = 480.dp)
         )
 
         Spacer(modifier = Modifier.height(28.dp))
 
-        // 4 Quick-Start Suggestion Cards
+        // Claude-Style Text-Only Suggestion Prompt Chips
         FlowRow(
-            modifier = Modifier.widthIn(max = 760.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.widthIn(max = 720.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             maxItemsInEachRow = 2
         ) {
             suggestions.forEach { suggestion ->
-                QuickSuggestionCard(
+                ClaudeSuggestionChip(
                     suggestion = suggestion,
                     onClick = { onSuggestionClick(suggestion.prompt) },
                     modifier = Modifier
                         .weight(1f)
-                        .widthIn(min = 240.dp)
+                        .widthIn(min = 260.dp)
                 )
             }
         }
     }
 }
 
+/**
+ * Clean text-only prompt chip inspired by Claude's minimalist desktop and mobile UI.
+ */
 @Composable
-private fun QuickSuggestionCard(
+private fun ClaudeSuggestionChip(
     suggestion: QuickSuggestion,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val (accentColor, iconVector) = when (suggestion.iconType) {
-        SuggestionIconType.CODE -> CubeCyan to Icons.Default.Terminal
-        SuggestionIconType.DATA -> CubeElectricBlue to Icons.Default.Analytics
-        SuggestionIconType.BRAINSTORM -> CubeNeonPurple to Icons.Default.Lightbulb
-        SuggestionIconType.ARCHITECTURE -> CubeEmerald to Icons.Default.Hub
-    }
-
-    Column(
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surface)
             .border(
                 width = 1.dp,
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        accentColor.copy(alpha = 0.45f),
-                        MaterialTheme.colorScheme.outline
-                    )
-                ),
-                shape = RoundedCornerShape(18.dp)
+                color = MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(16.dp)
             )
             .clickable(onClick = onClick)
-            .padding(16.dp)
-            .testTag("suggestion_card_${suggestion.id}")
+            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .testTag("suggestion_chip_${suggestion.id}")
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(accentColor.copy(alpha = 0.14f))
-                        .border(1.dp, accentColor.copy(alpha = 0.35f), RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = iconVector,
-                        contentDescription = null,
-                        tint = accentColor,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
                 Text(
-                    text = suggestion.badge,
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = accentColor
+                    text = suggestion.title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.5.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = ClaudeTerracotta.copy(alpha = 0.85f),
+                    modifier = Modifier.size(14.dp)
                 )
             }
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = CubeTextMuted,
-                modifier = Modifier.size(16.dp)
+            Text(
+                text = suggestion.subtitle,
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = suggestion.title,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            color = CubeTextPrimary
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = suggestion.subtitle,
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.5.sp),
-            color = CubeTextSecondary
-        )
     }
 }
 
+/**
+ * User message bubble: Clean, warm neutral rounded bubble.
+ */
 @Composable
 fun UserMessageBubble(
     message: ChatMessage,
@@ -259,42 +200,15 @@ fun UserMessageBubble(
             .testTag("user_message_${message.id}"),
         horizontalAlignment = Alignment.End
     ) {
-        // Metadata row above user bubble
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            modifier = Modifier.padding(bottom = 6.dp, end = 4.dp)
-        ) {
-            if (message.webSearchUsed) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(CubeCyan.copy(alpha = 0.12f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Public,
-                        contentDescription = null,
-                        tint = CubeCyan,
-                        modifier = Modifier.size(11.dp)
-                    )
-                    Text(
-                        text = "WEB",
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                        color = CubeCyan
-                    )
-                }
-            }
-            Text(
-                text = "YOU • ${message.timestamp}",
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                color = CubeTextMuted
-            )
-        }
+        // Metadata
+        Text(
+            text = "You • ${message.timestamp}",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 5.dp, end = 6.dp)
+        )
 
-        // Attached files if any
+        // Staged attachments chips
         if (message.attachments.isNotEmpty()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -303,75 +217,54 @@ fun UserMessageBubble(
                 message.attachments.forEach { chip ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(8.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .border(1.dp, CubeCyan.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.AttachFile,
                             contentDescription = null,
-                            tint = CubeCyan,
-                            modifier = Modifier.size(13.dp)
+                            tint = ClaudeTerracotta,
+                            modifier = Modifier.size(12.dp)
                         )
                         Text(
-                            text = "${chip.fileName} (${chip.fileSize})",
-                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
-                            color = CubeTextPrimary
+                            text = chip.fileName,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
             }
         }
 
-        // Distinct right-aligned user message bubble
+        // Soft, humanistic rounded user bubble
         Box(
             modifier = Modifier
-                .widthIn(max = 560.dp)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 20.dp,
-                        topEnd = 4.dp,
-                        bottomStart = 20.dp,
-                        bottomEnd = 20.dp
-                    )
-                )
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFF15263B),
-                            Color(0xFF111C2D)
-                        )
-                    )
-                )
+                .widthIn(max = 580.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .border(
                     width = 1.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            CubeCyan.copy(alpha = 0.55f),
-                            CubeElectricBlue.copy(alpha = 0.25f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(
-                        topStart = 20.dp,
-                        topEnd = 4.dp,
-                        bottomStart = 20.dp,
-                        bottomEnd = 20.dp
-                    )
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(18.dp)
                 )
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Text(
                 text = message.text,
                 style = MaterialTheme.typography.bodyLarge,
-                color = CubeTextPrimary
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 }
 
+/**
+ * Assistant (Cube / Claude-style) response card.
+ */
 @Composable
 fun CubeAssistantMessageCard(
     message: ChatMessage,
@@ -384,17 +277,6 @@ fun CubeAssistantMessageCard(
     val clipboardManager = LocalClipboardManager.current
     var copiedRecently by remember { mutableStateOf(false) }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "cursor_blink")
-    val cursorAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.15f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 450, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "cursor_alpha"
-    )
-
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -402,78 +284,62 @@ fun CubeAssistantMessageCard(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.Top
     ) {
-        // Unique Cube Avatar on the left
-        CubeIsometricIcon(
-            size = 36.dp,
-            animated = message.isStreaming
+        // Claude's signature warm terracotta asterism spark avatar
+        ClaudeAsterismIcon(
+            size = 32.dp,
+            tint = ClaudeTerracotta
         )
 
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            // Header with Cube model & latency badge
+            // Header with Model label & latency
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(bottom = 6.dp)
             ) {
                 Text(
-                    text = "CUBE",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
+                    text = "Cube",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
                     ),
-                    color = CubeTextPrimary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(CubeCyan.copy(alpha = 0.12f))
-                        .border(1.dp, CubeCyan.copy(alpha = 0.35f), RoundedCornerShape(6.dp))
+                        .background(ClaudeTerracotta.copy(alpha = 0.10f))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = message.modelUsed,
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
-                        color = CubeCyan
+                        color = ClaudeTerracotta
                     )
                 }
                 Text(
-                    text = if (message.isStreaming) "STREAMING…" else "${message.thinkingDurationMs}ms • ${message.timestamp}",
+                    text = if (message.isStreaming) "typing…" else "${message.thinkingDurationMs}ms • ${message.timestamp}",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = if (message.isStreaming) CubeCyan else CubeTextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Assistant Content Container
+            // Message Body Container
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 4.dp,
-                            topEnd = 20.dp,
-                            bottomStart = 20.dp,
-                            bottomEnd = 20.dp
-                        )
-                    )
+                    .clip(RoundedCornerShape(16.dp))
                     .background(
-                        if (message.isError) CubeCoralRed.copy(alpha = 0.08f)
+                        if (message.isError) ClaudeErrorRose.copy(alpha = 0.06f)
                         else MaterialTheme.colorScheme.surface
                     )
                     .border(
                         width = 1.dp,
-                        color = when {
-                            message.isError -> CubeCoralRed.copy(alpha = 0.75f)
-                            message.isStreaming -> CubeCyan.copy(alpha = 0.45f)
-                            else -> MaterialTheme.colorScheme.outline
-                        },
-                        shape = RoundedCornerShape(
-                            topStart = 4.dp,
-                            topEnd = 20.dp,
-                            bottomStart = 20.dp,
-                            bottomEnd = 20.dp
-                        )
+                        color = if (message.isError) ClaudeErrorRose.copy(alpha = 0.5f)
+                        else MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(16.dp)
                     )
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -481,7 +347,6 @@ fun CubeAssistantMessageCard(
                 FormattedAssistantMessageBody(
                     rawText = message.text,
                     isStreaming = message.isStreaming,
-                    cursorAlpha = cursorAlpha,
                     onCopyCodeBlock = { code ->
                         clipboardManager.setText(AnnotatedString(code))
                         onCopyText(code)
@@ -489,7 +354,7 @@ fun CubeAssistantMessageCard(
                 )
             }
 
-            // Action Buttons Row below AI response: Copy text, Thumbs Up, Thumbs Down, Regenerate response
+            // Action Buttons Row below Assistant response
             AnimatedVisibility(
                 visible = !message.isStreaming,
                 enter = fadeIn() + slideInVertically()
@@ -509,14 +374,14 @@ fun CubeAssistantMessageCard(
                             onCopyText(message.text)
                         },
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .testTag("action_copy_${message.id}")
                     ) {
                         Icon(
                             imageVector = if (copiedRecently) Icons.Default.Check else Icons.Default.ContentCopy,
                             contentDescription = stringResource(R.string.action_copy),
-                            tint = if (copiedRecently) CubeEmerald else CubeTextSecondary,
-                            modifier = Modifier.size(17.dp)
+                            tint = if (copiedRecently) ClaudeSuccessGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
 
@@ -524,15 +389,15 @@ fun CubeAssistantMessageCard(
                     IconButton(
                         onClick = onThumbsUp,
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .testTag("action_thumbs_up_${message.id}")
                     ) {
                         val isLiked = message.feedback == FeedbackState.LIKED
                         Icon(
                             imageVector = if (isLiked) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
                             contentDescription = stringResource(R.string.action_thumbs_up),
-                            tint = if (isLiked) CubeCyan else CubeTextSecondary,
-                            modifier = Modifier.size(17.dp)
+                            tint = if (isLiked) ClaudeTerracotta else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
 
@@ -540,15 +405,15 @@ fun CubeAssistantMessageCard(
                     IconButton(
                         onClick = onThumbsDown,
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .testTag("action_thumbs_down_${message.id}")
                     ) {
                         val isDisliked = message.feedback == FeedbackState.DISLIKED
                         Icon(
                             imageVector = if (isDisliked) Icons.Filled.ThumbDown else Icons.Outlined.ThumbDown,
                             contentDescription = stringResource(R.string.action_thumbs_down),
-                            tint = if (isDisliked) CubeCoralRed else CubeTextSecondary,
-                            modifier = Modifier.size(17.dp)
+                            tint = if (isDisliked) ClaudeErrorRose else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
 
@@ -556,14 +421,14 @@ fun CubeAssistantMessageCard(
                     IconButton(
                         onClick = onRegenerate,
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .testTag("action_regenerate_${message.id}")
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = stringResource(R.string.action_regenerate),
-                            tint = CubeTextSecondary,
-                            modifier = Modifier.size(18.dp)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
@@ -576,10 +441,8 @@ fun CubeAssistantMessageCard(
 private fun FormattedAssistantMessageBody(
     rawText: String,
     isStreaming: Boolean,
-    cursorAlpha: Float,
     onCopyCodeBlock: (String) -> Unit
 ) {
-    // Split text into normal paragraphs and ```code``` blocks for clean technical display
     val segments = remember(rawText) { parseMarkdownSegments(rawText) }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -590,22 +453,22 @@ private fun FormattedAssistantMessageBody(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0xFF070A10))
-                            .border(1.dp, CubeCyan.copy(alpha = 0.30f), RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF1E1E22))
+                            .border(1.dp, Color(0xFF333338), RoundedCornerShape(12.dp))
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFF0E1522))
+                                .background(Color(0xFF28282E))
                                 .padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = segment.language.ifBlank { "code" }.uppercase(),
-                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                                color = CubeCyan
+                                text = segment.language.ifBlank { "code" }.lowercase(),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.5.sp),
+                                color = ClaudeAmber
                             )
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -617,14 +480,14 @@ private fun FormattedAssistantMessageBody(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ContentCopy,
-                                    contentDescription = "Copy code snippet",
-                                    tint = CubeTextSecondary,
+                                    contentDescription = "Copy code",
+                                    tint = Color(0xFFA8A29E),
                                     modifier = Modifier.size(12.dp)
                                 )
                                 Text(
-                                    text = "COPY",
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
-                                    color = CubeTextSecondary
+                                    text = "Copy",
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                    color = Color(0xFFA8A29E)
                                 )
                             }
                         }
@@ -642,7 +505,7 @@ private fun FormattedAssistantMessageBody(
                                     fontSize = 12.5.sp,
                                     lineHeight = 19.sp
                                 ),
-                                color = Color(0xFFE2E8F0)
+                                color = Color(0xFFF5F5F4)
                             )
                         }
                     }
@@ -652,19 +515,20 @@ private fun FormattedAssistantMessageBody(
                     val displayProse = segment.text
                         .replace("### ", "")
                         .replace("**", "")
+
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = displayProse,
                             style = MaterialTheme.typography.bodyLarge,
-                            color = CubeTextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f, fill = false)
                         )
                         if (isStreaming && isLastSegment) {
                             Box(
                                 modifier = Modifier
-                                    .padding(start = 6.dp, bottom = 3.dp)
-                                    .size(width = 8.dp, height = 16.dp)
-                                    .background(CubeCyan.copy(alpha = cursorAlpha))
+                                    .padding(start = 4.dp, bottom = 4.dp)
+                                    .size(width = 6.dp, height = 15.dp)
+                                    .background(ClaudeTerracotta)
                             )
                         }
                     }
@@ -710,12 +574,12 @@ fun CubeThinkingIndicator(
     modelName: String,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "thinking_dots")
+    val infiniteTransition = rememberInfiniteTransition(label = "claude_pulse")
     val pulse by infiniteTransition.animateFloat(
-        initialValue = 0.3f,
+        initialValue = 0.4f,
         targetValue = 1.0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 650, easing = LinearEasing),
+            animation = tween(durationMillis = 800, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse"
@@ -728,27 +592,27 @@ fun CubeThinkingIndicator(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        CubeIsometricIcon(size = 36.dp, animated = true)
+        ClaudeAsterismIcon(size = 32.dp, tint = ClaudeTerracotta)
 
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(14.dp))
                 .background(MaterialTheme.colorScheme.surface)
-                .border(1.dp, CubeCyan.copy(alpha = 0.45f), RoundedCornerShape(16.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(14.dp))
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(8.dp)
+                    .size(7.dp)
                     .clip(CircleShape)
-                    .background(CubeCyan.copy(alpha = pulse))
+                    .background(ClaudeTerracotta.copy(alpha = pulse))
             )
             Text(
-                text = "$modelName is synthesizing response…",
-                style = MaterialTheme.typography.labelLarge.copy(fontSize = 12.5.sp),
-                color = CubeCyan
+                text = "Cube ($modelName) is thinking…",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
